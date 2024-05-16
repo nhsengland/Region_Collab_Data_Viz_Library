@@ -1,5 +1,5 @@
-# {PROJECT NAME}
-## NHS England Regional R Data Viz Library
+# NHSE R Data Viz Library
+## NHS England Regional Collaboration
 
 ### About the Project
 
