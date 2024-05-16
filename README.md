@@ -1,27 +1,25 @@
 # {PROJECT NAME}
-## NHS England Digitial Analytics and Research Team - PhD Internship Project
+## NHS England Regional R Data Viz Library
 
 ### About the Project
 
 [![status: experimental](https://github.com/GIScience/badges/raw/master/status/experimental.svg)](https://github.com/GIScience/badges#experimental)
 
-This repository holds code for the {PROJECT NAME} {SHORT DESCRIPTION}
+This repository holds code for data visualisation within R, using a collection of published datasets that are available at different organisational and geographic breakdowns. The intention of this project is to share code across all regions and encourage increased usage of R by having a library colleagues can access.
 
 [Link to original project propsoal](https://nhsx.github.io/nhsx-internship-projects/)
 
-_**Note:** Only public or fake data are shared in this repository._
+_**Note:** Only public data is shared in this repository._
 
 ### Project Stucture
 
-- The main code is found in the root of the repository (see Usage below for more information)
-- The accompanying [report](./reports/report.pdf) is also available in the `reports` folder
-- More information about the code usage can be found in the [model card](./model_card.md)
-- {OTHER REPO STRUCTURE}
+- The main output is a html file that utilises quarto to provide a documentent that users can interact with, much like a library
+- The data visualisations are sorted by type within the html output, with associated code and a link to the public data that can be used to get you started
+- The html is a output of the QMD file
 
 ### Built With
 
-[![Python v3.8](https://img.shields.io/badge/python-v3.8-blue.svg)](https://www.python.org/downloads/release/python-380/)
-- {LIST OF MAIN PACKAGE VERSIONS}
+R studio
 
 ### Getting Started
 
@@ -38,24 +36,21 @@ To create a suitable environment:
 - `source _env/bin/activate`
 - `pip install -r requirements.txt`
 
-{ADDITIONAL TECHNICAL SUPPORT AND NEEDS} 
+If you would like to contribute to the code library, create a branch off dev for review to commit back into the main branch.
 
 ### Usage
-{DESCRIPTION OF CODE}
+This code can be utilised within R for creating your own data visualisations.
 
 #### Outputs
-{LIST AND DESCRIPTION OF OUTPUTS}
-
-{NOTES ON REPRODUCIBILITY OF RESULTS}
+The main output of this repo is a html document that serves as a library, with examples of data visualisations, associated code and test data.
 
 #### Datasets
-{DESCRIPTION AND LINKS TO DATASETS}
-
-{LINK TO FAKE DATA TO SUPPORT INITAIL CODE RUNS}
+The datasets available are:
+{INSERT}
 
 ### Roadmap
 
-See the {LINK TO REPO ISSUES} for a list of proposed features (and known issues).
+See the Repo Issues for a list of proposed features (and known issues).
 
 ### Contributing
 
@@ -85,7 +80,8 @@ of the [Open Government 3.0][ogl] licence.
 
 ### Contact
 
-To find out more about the [Digitial Analytics and Research Team](https://www.nhsx.nhs.uk/key-tools-and-info/nhsx-analytics-unit/) visit our [project website](https://nhsx.github.io/AnalyticsUnit/projects.html) or get in touch at [analytics-unit@nhsx.nhs.uk](mailto:analytics-unit@nhsx.nhs.uk).
+To find out more about the project -
+Email will.manners@nhs.net, ruby.nicholls@nhs.net, adam.dowling2@nhs.net
 
 <!-- ### Acknowledgements -->
 
