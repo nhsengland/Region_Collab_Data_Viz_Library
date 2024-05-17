@@ -7,15 +7,12 @@
 
 This repository holds code for data visualisation within R, using a collection of published datasets that are available at different organisational and geographic breakdowns. The intention of this project is to share code across all regions and encourage increased usage of R by having a library colleagues can access.
 
-[Link to original project propsoal](https://nhsx.github.io/nhsx-internship-projects/)
-
 _**Note:** Only public data is shared in this repository._
 
 ### Project Stucture
 
-- The main output is a html file that utilises quarto to provide a documentent that users can interact with, much like a library
-- The data visualisations are sorted by type within the html output, with associated code and a link to the public data that can be used to get you started
-- The html is a output of the QMD file
+- The main output is a html file that utilises rmarkdown to provide a documentent that users can interact with, much like a library: https://github.com/nhsengland/Region_Collab_Data_Viz_Library/blob/main/Regional_R_Data_Viz_Library.html
+- The data visualisations are sorted by type within the html output, with associated code and a sample dataset and list of packages to load to get you started: https://github.com/nhsengland/Region_Collab_Data_Viz_Library/blob/main/Regional_R_Data_Viz_Library.html
 
 ### Built With
 
