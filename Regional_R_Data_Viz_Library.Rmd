@@ -23,8 +23,11 @@ The foundations of this library are sourced from a GGplot guide by Mike Perham. 
 if (!require("pacman")) install.packages("pacman"); library(pacman)
 
 pacman::p_load(Rcpp, tidyverse,dplyr,tidyr,
-               ggplot2,ggthemes,ggtext,scales, NHSRtheme,
+               ggplot2,ggthemes,ggtext,scales,
                png,ggalt,NHSRdatasets)
+
+# install.packages('devtools')
+devtools::install_github('nhs-r-community/NHSRtheme')
 ```
 
 ## Load sample data
