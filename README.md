@@ -7,15 +7,12 @@
 
 This repository holds code for data visualisation within R, using a collection of published datasets that are available at different organisational and geographic breakdowns. The intention of this project is to share code across all regions and encourage increased usage of R by having a library colleagues can access.
 
-[Link to original project propsoal](https://nhsx.github.io/nhsx-internship-projects/)
-
 _**Note:** Only public data is shared in this repository._
 
 ### Project Stucture
 
-- The main output is a html file that utilises quarto to provide a documentent that users can interact with, much like a library
-- The data visualisations are sorted by type within the html output, with associated code and a link to the public data that can be used to get you started
-- The html is a output of the QMD file
+- The main output is a html file that utilises rmarkdown to provide a documentent that users can interact with, much like a library: https://github.com/nhsengland/Region_Collab_Data_Viz_Library/blob/main/Regional_R_Data_Viz_Library.html
+- The data visualisations are sorted by type within the html output, with associated code and a sample dataset and list of packages to load to get you started: https://github.com/nhsengland/Region_Collab_Data_Viz_Library/blob/main/Regional_R_Data_Viz_Library.html
 
 ### Built With
 
@@ -29,12 +26,7 @@ To get a local copy up and running follow these simple steps.
 
 To clone the repo:
 
-`git clone https://github.com/nhsx/{REPO NAME}`
-
-To create a suitable environment:
-- ```python -m venv _env```
-- `source _env/bin/activate`
-- `pip install -r requirements.txt`
+`git clone [https://github.com/nhsengland/Region_Collab_Data_Viz_Library]`
 
 If you would like to contribute to the code library, create a branch off dev for review to commit back into the main branch.
 
@@ -42,14 +34,12 @@ If you would like to contribute to the code library, create a branch off dev for
 This code can be utilised within R for creating your own data visualisations.
 
 #### Outputs
-The main output of this repo is a html document that serves as a library, with examples of data visualisations, associated code and test data.
+The main output of this repo is a html document that serves as a library, with examples of data visualisations and associated code.
 
 #### Datasets
-The datasets available are:
-{INSERT}
+This library utilises the NHSRdatasets package.
 
 ### Roadmap
-
 See the Repo Issues for a list of proposed features (and known issues).
 
 ### Contributing
@@ -71,8 +61,7 @@ This covers both the codebase and any sample code in the documentation.
 
 _See [LICENSE](./LICENSE) for more information._
 
-The documentation is [© Crown copyright][copyright] and available under the terms
-of the [Open Government 3.0][ogl] licence.
+The documentation is [© Crown copyright][copyright] and available under the terms of the [Open Government 3.0][ogl] licence.
 
 [mit]: LICENCE
 [copyright]: http://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/
@@ -81,7 +70,7 @@ of the [Open Government 3.0][ogl] licence.
 ### Contact
 
 To find out more about the project -
-Email will.manners@nhs.net, ruby.nicholls@nhs.net, adam.dowling2@nhs.net
+Email michael.perham1@nhs.net, will.manners@nhs.net, ruby.nicholls@nhs.net, adam.dowling2@nhs.net
 
 <!-- ### Acknowledgements -->
 
