@@ -11,7 +11,7 @@ _**Note:** Only public data is shared in this repository._
 
 ### Project Stucture
 
-- The main output is a html file that utilises rmarkdown to provide a documentent that users can interact with, much like a library: [https://github.com/nhsengland/Region_Collab_Data_Viz_Library/blob/main/Regional_R_Data_Viz_Library.html](https://github.com/nhsengland/Region_Collab_Data_Viz_Library/blob/main/Regional_R_Data_Viz_Library.Rmd)
+- The main output is a html file that utilises rmarkdown to provide a documentent that users can interact with, much like a library: [https://github.com/nhsengland/Region_Collab_Data_Viz_Library/blob/main/Regional_R_Data_Viz_Library.rmd](https://github.com/nhsengland/Region_Collab_Data_Viz_Library/blob/main/Regional_R_Data_Viz_Library.Rmd)
 - The data visualisations are sorted by type within the html output, with associated code and a sample dataset and list of packages to load to get you started: [https://github.com/nhsengland/Region_Collab_Data_Viz_Library/blob/main/Regional_R_Data_Viz_Library.html](https://github.com/nhsengland/Region_Collab_Data_Viz_Library/blob/main/Regional_R_Data_Viz_Library.html)
 
 ### Built With
