@@ -18,8 +18,6 @@ _**Note:** Only public data is shared in this repository._
 
 R studio
 
-### Getting Started
-
 #### Installation
 
 To get a local copy up and running follow these simple steps.
@@ -29,6 +27,8 @@ To clone the repo:
 `git clone [https://github.com/nhsengland/Region_Collab_Data_Viz_Library]`
 
 If you would like to contribute to the code library, create a branch off dev for review to commit back into the main branch.
+
+More information on NHSRTheme package: https://nhs-r-community.github.io/NHSRtheme/
 
 ### Usage
 This code can be utilised within R for creating your own data visualisations.
