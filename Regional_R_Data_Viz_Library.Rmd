@@ -1,7 +1,7 @@
 ---
-title: "SE PAT - ggplot reference library"
-author: "SE Analytics"
-date: "05/10/2022"
+title: "NHS R Data Visualisation Library"
+author: "NHS England Regional Collaboration utilising the foundations of a GGplot library created by Mike Perham"
+date: "17/05/2024"
 output:
   html_document:
     toc: true
@@ -13,9 +13,11 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-The file has been put together to provide a quick guide to creating some basic charts in ggplot. 
+This library has been created to enable users to view examples of data visualisations utilising the NHS themes, using NHS public datasets. Users can load the required packages and create the sample datasets, and then choose which data visualisations they would like to run in their own environment.
 
-## Install/load required packages
+The foundations of this library are sourced from a GGplot guide by Mike Perham. This has been expanded as a proof of concept for working collaboratively over regions to input and build upon, becoming the R Data Viz Library.
+
+# Install/load required packages
 
 ```{r LoadData, warning = FALSE, message = FALSE}
 if (!require("pacman")) install.packages("pacman"); library(pacman)
@@ -38,7 +40,7 @@ Attends <- NHSRdatasets::ae_attendances %>%
   select(-c(3,5))
 ```
 
-## NHSR Theme
+# NHSR Theme
 
 All of the examples in this document use dummy data from the NHSRdatasets package. The next step loads the data and performs some simple filtering steps.
 
@@ -49,6 +51,8 @@ All of the examples in this document use dummy data from the NHSRdatasets packag
 NHSRtheme::get_nhs_colours()
 
 ```
+
+# Data Over Time
 
 ## Basic line chart
 
@@ -83,6 +87,8 @@ ggplot(multiple_line_df, aes(x = period, y = attendances, colour = org_code)) +
 
 ```
 
+# Comparisons
+
 ## Simple bar chart
 
 ```{r , warning = FALSE}
@@ -103,7 +109,9 @@ plot(bar)
 
 ```
 
-## Add labels
+### Add labels
+
+The code below adds labels to your simple bar chart.
 
 ```{r , warning = FALSE}
 #Filter initial dataset
@@ -132,6 +140,40 @@ ggplot(grouped_bar_df,
 
 ```
 
+## Bubble chart
+
+Insert here
+
+## Population Pyramid chart
+
+Insert here
+
+## Radar chart
+
+Insert here
+
+## Radial chart
+
+Insert here
+
+## Radial Column chart
+
+Insert here
+
+## Span chart
+
+Insert here
+
+## Stacked area chart
+
+Insert here
+
+## Stacked bar chart
+
+Insert here
+
+# Creating multiple charts for the same measure
+
 ## Faceted chart
 
 Use `facet_wrap()` to create multiple charts split by subgroup in data. You can use `ncol =` or `nrow` to specify number of rows or columns. For example, `facet_wrap(~org_code, nrow=1)` to put all charts in a single row.
@@ -145,6 +187,40 @@ ggplot(Attends, aes(x = period, y = attendances)) +
   expand_limits(y = 0)
 
 ```
+
+# Range
+
+## Box & Whisker chart
+
+Insert here
+
+## Bullet chart
+
+Insert here
+
+## Candlestick chart
+
+Insert here
+
+## Error bars chart
+
+Insert here
+
+## Gantt chart
+
+Insert here
+
+## Kagi chart
+
+Insert here
+
+## Span chart
+
+Insert here
+
+## Violin chart
+
+Insert here
 
 ## Dumbell chart
 
@@ -182,7 +258,7 @@ dumbell <- ggplot(dumbbell_df, aes(x = `2017`, xend = `2019`, y = reorder(org_co
 plot(dumbell)
 ```
 
-## Adding annotations
+### Adding annotations
 
 You can use `geom_label` to add annotations to existing plots or you can add line in when creating ggplot.
 
@@ -197,4 +273,3 @@ dumbell + geom_label(aes(x = 0.9, y = "R1K",label = "Standard"),
                            size = 4)
 
 ```
-
