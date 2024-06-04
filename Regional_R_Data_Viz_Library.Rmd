@@ -13,9 +13,17 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-This library has been created to enable users to view examples of data visualisations utilising the NHS themes, using NHS public datasets. Users can load the required packages and create the sample datasets, and then choose which data visualisations they would like to run in their own environment.
+This library has been created to enable users to view examples of data visualisations utilising the NHS themes, using NHS public data sets. Users can load the required packages and create the sample data sets, and then choose which data visualisations they would like to run in their own environment.
 
 The foundations of this library are sourced from a GGplot guide by Mike Perham. This has been expanded as a proof of concept for working collaboratively over regions to input and build upon, becoming the R Data Viz Library.
+
+For more information about each data visualisation type, the below are recommended to review:
+
+### The Data Visualisation Catalogue: <https://datavizcatalogue.com/index.html>
+
+### The R Graph Gallery: <https://r-graph-gallery.com/>
+
+### Top 50 GGplot2 Visualisations: <https://r-statistics.co/Top50-Ggplot2-Visualizations-MasterList-R-Code.html>
 
 # Install/load required packages
 
@@ -24,15 +32,27 @@ if (!require("pacman")) install.packages("pacman"); library(pacman)
 
 pacman::p_load(Rcpp, tidyverse,dplyr,tidyr,
                ggplot2,ggthemes,ggtext,scales,
-               png,ggalt,NHSRdatasets)
+               png,ggalt,NHSRdatasets,onsr)
 
 # install.packages('devtools')
 devtools::install_github('nhs-r-community/NHSRtheme')
+# install.packages("remotes")
+remotes::install_github("rOpenSci/fingertipsR",
+                        build_vignettes = TRUE,
+                        dependencies = "suggests")
 ```
 
-## Load sample data
+# Load sample data
 
-All of the examples in this document use dummy data from the NHSRdatasets package. The next step loads the data and performs some simple filtering steps.
+All of the examples in this document use A&E dummy data from the NHSRdatasets package for NHS reporting, fingertips data for Public Health and ONS data for population data. These give us broad datasets that can be used for different data visualisation types.
+
+More information on these packages can be found here:
+
+### NHSRdatasets:
+
+<https://github.com/nhs-r-community/NHSRdatasets>
+
+<https://nhs-r-community.github.io/NHSRdatasets/>
 
 ```{r , warning = FALSE}
 #Load initial dataset and clean up
@@ -43,9 +63,61 @@ Attends <- NHSRdatasets::ae_attendances %>%
   select(-c(3,5))
 ```
 
+### Fingertips:
+
+<https://github.com/ropensci/fingertipsR>
+
+The below gets population by sex.
+
+```{r , warning = FALSE}
+# Load fingertipsR package
+library(fingertipsR)
+
+# Get available profiles in fingertips
+profiles_data <- profiles()
+print(profiles_data)
+
+# Find profiles related to population
+population_profiles <- profiles_data %>%
+  filter(grepl("population", ProfileName, ignore.case = TRUE))
+print(population_profiles)
+
+# Search for indicators related to population structure, DomainID was found by viewing the population_profiles and selecting a DomainID
+population_indicators <- indicator_metadata(DomainID = "1938133081") #Replace with DomainID from above
+
+# Get the relevant indicator of the measure from your list of population_indicators
+indicator_id <- 92708  # Replace with the actual indicator ID from the results above
+
+#Get list of area types
+area_types_data <- area_types()
+
+# Get the data for the specific indicator
+population_data <- fingertips_data(IndicatorID = indicator_id,AreaTypeID = "15") #Note for Area Types you can select all, but it will take a long time. 15 is England.
+
+# Filter data to include only relevant columns and non-NA values
+population_data_filtered <- population_data %>%
+  filter(!is.na(Age), !is.na(Value)) %>%
+  select(AreaName, Sex, Age, Value)
+
+# Adjust the values for plotting (male values negative for pyramid structure)
+population_data_filtered <- population_data_filtered %>%
+  mutate(Value = ifelse(Sex == "Male", -Value, Value)) %>%
+  filter(Age != "All ages") %>%
+  filter(Sex != "Persons")
+
+# Convert the Age column to a factor and specify the levels in the desired order
+population_data_filtered$Age <- factor(population_data_filtered$Age, levels = c("0-4 yrs", "5-9 yrs", "10-14 yrs", "15-19 yrs", "20-24 yrs", "25-29 yrs", "30-34 yrs", "35-39 yrs", "40-44 yrs", "45-49 yrs", "50-54 yrs", "55-59 yrs", "60-64 yrs", "65-69 yrs", "70-74 yrs", "75-79 yrs", "80-84 yrs", "85-89 yrs","90+ yrs"))
+```
+
+### ONS:
+
+[https://medium.com/\@VickyCrockett1/how-do-you-get-data-into-r-from-the-ons-c860043fef8c](https://medium.com/@VickyCrockett1/how-do-you-get-data-into-r-from-the-ons-c860043fef8c){.uri}
+
+The next step loads the data and performs some simple filtering steps.
+
 # NHSR Theme
 
-All of the examples in this document use dummy data from the NHSRdatasets package. The next step loads the data and performs some simple filtering steps.
+All of the examples in this document use dummy data from the NHSRdatasets package (more information on this package can be found here: <https://github.com/nhs-r-community/NHSRtheme>). As the package is not in CRAN, you need to use devtools to load the package from github.
 
 ```{r , warning = FALSE}
 #install.packages("remotes")
@@ -145,11 +217,88 @@ ggplot(grouped_bar_df,
 
 ## Bubble chart
 
-Insert here
+```{r , warning = FALSE}
+
+#For this example we are filtering on 5 organisations, type 1 activity & excluding column 3 from the dataframe.
+Attends <- NHSRdatasets::ae_attendances %>%
+  filter(org_code == "RXQ"|org_code=="RTH"|org_code=="RHW"|
+           org_code == "RTK"|org_code == "RA2")
+
+  # Summarise data for type 1 attendances
+  type_1_summary <- Attends %>%
+  filter(type == 1) %>%
+  group_by(org_code, period) %>%
+  summarise(type_1_attendances = sum(attendances, na.rm = TRUE)) %>%
+  ungroup()
+
+# Summarise data for non-type 1 attendances
+type_other_summary <- Attends %>%
+  filter(type == 3|type== 2) %>%
+  group_by(org_code, period) %>%
+  summarise(type_other_attendances = sum(attendances, na.rm = TRUE)) %>%
+  ungroup()
+
+# Summarise total attendances and total admissions
+total_summary <- Attends %>%
+  group_by(org_code, period) %>%
+  summarise(
+    total_attendances = sum(attendances, na.rm = TRUE),
+    total_breaches = sum(breaches, na.rm = TRUE),
+    total_admissions = sum(admissions, na.rm = TRUE)
+  ) %>%
+  ungroup()
+
+# Merge the summaries into a single data frame
+final_summary <- total_summary %>%
+  left_join(type_1_summary, by = c("org_code", "period")) %>%
+  left_join(type_other_summary, by = c("org_code", "period"))
+
+# Replace NA values with 0 for type_1_attendances and type_3_attendances
+final_summary <- final_summary %>%
+  mutate(
+    type_1_attendances = replace_na(type_1_attendances, 0),
+    type_other_attendances = replace_na(type_other_attendances, 0)
+  )
+
+# Add percentage columns
+final_summary <- final_summary %>%
+  mutate(
+    perc_admissions_attendances = (total_admissions / total_attendances) * 100,
+    perc_type1_attendances_total = (type_1_attendances / total_attendances) * 100,
+    perc_breaches_attendances = (total_breaches / total_attendances) * 100
+  )
+
+# Filter initial dataset
+bubble_df <- final_summary
+
+# Calculate size for bubble chart (proportional to type 1 attendances)
+bubble_df <- bubble_df %>%
+  mutate(size = perc_type1_attendances_total / max(perc_type1_attendances_total) * 100)
+
+# Create bubble chart
+ggplot(bubble_df, aes(x = perc_admissions_attendances, y = perc_breaches_attendances, size = size, color = size)) +
+  geom_point(alpha = 0.5) +
+  scale_size_continuous(name = "Proportion of type 1") +
+  NHSRtheme::scale_fill_nhs('blues', name = "Proportion of type 1") +
+  labs(title = "Bubble Chart of % 4 Hour Breaches vs % converted to admission with % Attendances Type 1 Size",
+       x = "Conversion Rate", y = "% 4 Hour Breaches") +
+  theme(legend.position = "right")
+```
 
 ## Population Pyramid chart
 
-Insert here
+```{r , warning = FALSE}
+# Plot the population pyramid
+ggplot(population_data_filtered, aes(x = Age, y = Value, fill = Sex)) +
+  geom_bar(stat = "identity", position = "identity") +
+  coord_flip() +
+  scale_y_continuous(labels = function(x) comma(abs(x))) +
+  labs(title = "Population Age Profile by Gender",
+       x = "Age Group",
+       y = "Population Count",
+       fill = "Gender") +
+  NHSRtheme::scale_fill_nhs("blues")
+```
 
 ## Radar chart
 
@@ -161,19 +310,58 @@ Insert here
 
 ## Radial Column chart
 
-Insert here
+```{r , warning = FALSE}
+
+# Create a radial column chart
+ggplot(Attends, aes(x = reorder(org_code, -attendances), y = attendances)) +
+  geom_col(width = 0.5, fill = "skyblue") +
+  coord_polar(start = 0) +
+   NHSRtheme::scale_fill_nhs("blues") +
+  scale_y_continuous(labels = function(x) comma(abs(x))) +
+  labs(title = "Attendances per Trust",
+       x = NULL, y = NULL)
+```
 
 ## Span chart
 
-Insert here
+```{r , warning = FALSE}
+# Summarize the data
+summary_data <- Attends %>%
+  group_by(org_code) %>%
+  summarise(min_attendance = min(attendances),
+            max_attendance = max(attendances))
+
+# Create the horizontal bar range chart
+ggplot(summary_data, aes(y = org_code)) +
+  geom_linerange(aes(xmin = min_attendance, xmax = max_attendance), color = "blue", size = 1.5) +
+  labs(title = "Range of Type 1 Attendances by Trust between 2019 and 2023",
+       x = "Number of Attendances",
+       y = "Organisation Code") +
+   NHSRtheme::scale_fill_nhs("blues")
+```
 
 ## Stacked area chart
 
-Insert here
+```{r , warning = FALSE}
+
+# Plot the stacked area chart
+ggplot(Attends, aes(x = period, fill = org_code)) +
+  geom_area(stat = "count") +
+  NHSRtheme::scale_fill_nhs("blues")
+```
 
 ## Stacked bar chart
 
-Insert here
+```{r , warning = FALSE}
+ggplot(Attends, aes(x = period, y = attendances, fill = org_code)) +
+  geom_bar(stat = "identity") +
+  labs(title = "A&E Attendances by Trust",
+       x = "Period",
+       y = "Number of Attendances",
+       fill = "Organisation Code") +
+  NHSRtheme::scale_fill_nhs("blues")
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
 
 # Creating multiple charts for the same measure
 
@@ -195,7 +383,15 @@ ggplot(Attends, aes(x = period, y = attendances)) +
 
 ## Box & Whisker chart
 
-Insert here
+```{r , warning = FALSE}
+g <- ggplot(Attends, aes(org_code, attendances))
+g + geom_boxplot(varwidth=T, fill="light blue") + 
+    labs(title="A&E Attendances", 
+         subtitle="Distribution by Trust",
+         caption="Source: A&E Monthly Stats",
+         x="Trust",
+         y="A&E attendances")
+```       
 
 ## Bullet chart
 
@@ -223,7 +419,12 @@ Insert here
 
 ## Violin chart
 
-Insert here
+```{r, warning = FALSE}
+
+#Violin Plot
+ggplot(Attends, aes(org_code, attendances)) + geom_violin() + 
+  labs(title="A&E Attendances", subtitle="Range by Trust", caption="Source: A&E Monthly Statistics", x="Trust", y="Attendances") + scale_fill_brewer(palette="Blues") + theme_classic()
+```
 
 ## Dumbell chart
 
