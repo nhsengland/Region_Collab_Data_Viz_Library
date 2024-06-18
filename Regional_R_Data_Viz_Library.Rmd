@@ -35,11 +35,12 @@ pacman::p_load(Rcpp, tidyverse,dplyr,tidyr,
                png,ggalt,NHSRdatasets,onsr)
 
 # install.packages('devtools')
-devtools::install_github('nhs-r-community/NHSRtheme')
+#devtools::install_github('nhs-r-community/NHSRtheme')
 # install.packages("remotes")
 remotes::install_github("rOpenSci/fingertipsR",
                         build_vignettes = TRUE,
-                        dependencies = "suggests")
+                        dependencies = "suggests",
+                        build = F)
 ```
 
 # Load sample data
@@ -123,7 +124,7 @@ All of the examples in this document use dummy data from the NHSRdatasets packag
 #install.packages("remotes")
 #remotes::install_github("nhs-r-community/NHSRtheme")
 
-NHSRtheme::get_nhs_colours()
+#NHSRtheme::get_nhs_colours()
 
 ```
 
@@ -139,9 +140,13 @@ line_df <- Attends %>%
 #Make plot
 ggplot(line_df, aes(x = period, y = attendances)) +
   geom_line(colour = "#005EB8", size = 1.5) +
+  scale_y_continuous(labels = comma) +
   labs(title="Type 1 attendances - Bucks Healthcare",
-       subtitle = "April 2016 to March 2019") +
+       subtitle = "April 2016 to March 2019",
+       y = "Attendances",
+       x = "Month") +
   expand_limits(y = 0)
+
 ```
 
 ## Multiple line chart
@@ -152,13 +157,20 @@ multiple_line_df <- Attends %>%
   filter(org_code == "RXQ" | org_code=="RTH") 
 
 #Make plot
-ggplot(multiple_line_df, aes(x = period, y = attendances, colour = org_code)) +
+ggplot(multiple_line_df,
+         aes(x = period, y = attendances, colour = org_code)) +
   geom_line(size = 1) +
-  geom_point()+
+  geom_point() +
   scale_colour_manual(values = c("#005EB8", "#41B6E6")) +
-  labs(title="Type 1 attendances - Bucks Healthcare vs Royal Berkshire",
-       subtitle = "April 2016 to March 2019") +
-  expand_limits(y = 0)
+  scale_y_continuous(labels = comma) +
+  labs(
+    title = "Type 1 attendances - Bucks Healthcare vs Royal Berkshire",
+    subtitle = "April 2016 to March 2019",
+    y = "Attendances",
+    x = "Month"
+  ) +
+  expand_limits(y = 0) +
+  theme(legend.title = element_blank())
 
 ```
 
@@ -173,12 +185,19 @@ bar_df <- Attends %>%
 
 #Make plot
 bar <- ggplot(bar_df, aes(x = org_code, y = attendances)) +
-  geom_bar(stat="identity", 
-           position="identity", 
-           fill="#005EB8") +
-  geom_hline(yintercept = 0, size = 1, colour="#333333") +
-  labs(title="Type 1 attendances",
-       subtitle = "March 2019")
+  geom_bar(stat = "identity",
+           position = "identity",
+           fill = "#005EB8") +
+  geom_hline(yintercept = 0,
+             size = 1,
+             colour = "#333333") +
+  scale_y_continuous(labels = comma) +
+  labs(
+    title = "Type 1 attendances",
+    subtitle = "March 2019",
+    y = "Attendances",
+    x = "Provider Code"
+  )
 
 plot(bar)
 
@@ -190,7 +209,7 @@ The code below adds labels to your simple bar chart.
 
 ```{r , warning = FALSE}
 #Filter initial dataset
-bar + geom_text(aes(label = attendances), vjust =2, color= "White")
+bar + geom_text(aes(label = scales::comma(attendances)), vjust =2, color= "White")
 
 ```
 
@@ -203,15 +222,63 @@ grouped_bar_df <- Attends %>%
   select(c(1:3))
 
 #Make plot
-ggplot(grouped_bar_df, 
-                aes(x = org_code, 
-                y = attendances, 
-                fill = as.factor(period))) +
-  geom_bar(stat="identity", position="dodge") +
-  geom_hline(yintercept = 0, size = 1, colour="#333333") +
-  NHSRtheme::scale_fill_nhs('blues')+
-  labs(title="Attendances have increase in all providers other than Bucks Healthcare",
-       subtitle = "March 2017 vs March 2019")
+ggplot(grouped_bar_df,
+       aes(
+         x = org_code,
+         y = attendances,
+         fill = as.factor(period)
+       )) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_hline(yintercept = 0,
+             size = 1,
+             colour = "#333333") +
+  scale_y_continuous(labels = comma) +
+  #NHSRtheme::scale_fill_nhs('blues')+
+  labs(
+    title = "Attendances have increased in all providers other than Bucks Healthcare",
+    subtitle = "March 2017 vs March 2019",
+    y = "Attendances",
+    x = "Provider Code"
+  ) +
+  theme(legend.title = element_blank())
+
+```
+## Stacked bar chart
+
+```{r , warning = FALSE}
+AttendsAll <- NHSRdatasets::ae_attendances %>%
+  filter(
+    org_code == "RXQ" | org_code == "RTH" | org_code == "RHW" |
+      org_code == "RTK" | org_code == "RA2"
+  ) %>%
+  filter(period == '2017-03-01')
+
+ggplot(AttendsAll, aes(fill = type, y = attendances, x = org_code)) +
+  geom_bar(position = "stack", stat = "identity") +
+  scale_y_continuous(labels = comma) +
+  labs(title = "A&E attendances by department type - March 2017",
+       y = "Attendances",
+       x = "Provider Code") +
+  theme(legend.title = element_blank())
+
+```
+## Percent stacked bar chart
+
+```{r , warning = FALSE}
+AttendsAll <- NHSRdatasets::ae_attendances %>%
+  filter(
+    org_code == "RXQ" | org_code == "RTH" | org_code == "RHW" |
+      org_code == "RTK" | org_code == "RA2"
+  ) %>%
+  filter(period == '2017-03-01')
+
+ggplot(AttendsAll, aes(fill = type, y = attendances, x = org_code)) +
+  geom_bar(position = "fill", stat = "identity") +
+  scale_y_continuous(labels = percent) +
+  labs(title = "A&E attendances by department type - March 2017",
+       y = "Attendances",
+       x = "Provider Code") +
+  theme(legend.title = element_blank())
 
 ```
 
@@ -279,7 +346,7 @@ bubble_df <- bubble_df %>%
 ggplot(bubble_df, aes(x = perc_admissions_attendances, y = perc_breaches_attendances, size = size, color = size)) +
   geom_point(alpha = 0.5) +
   scale_size_continuous(name = "Proportion of type 1") +
-  NHSRtheme::scale_fill_nhs('blues', name = "Proportion of type 1") +
+  #NHSRtheme::scale_fill_nhs('blues', name = "Proportion of type 1") +
   labs(title = "Bubble Chart of % 4 Hour Breaches vs % converted to admission with % Attendances Type 1 Size",
        x = "Conversion Rate", y = "% 4 Hour Breaches") +
   theme(legend.position = "right")
@@ -316,7 +383,7 @@ Insert here
 ggplot(Attends, aes(x = reorder(org_code, -attendances), y = attendances)) +
   geom_col(width = 0.5, fill = "skyblue") +
   coord_polar(start = 0) +
-   NHSRtheme::scale_fill_nhs("blues") +
+   #NHSRtheme::scale_fill_nhs("blues") +
   scale_y_continuous(labels = function(x) comma(abs(x))) +
   labs(title = "Attendances per Trust",
        x = NULL, y = NULL)
