@@ -32,7 +32,7 @@ if (!require("pacman")) install.packages("pacman"); library(pacman)
 
 pacman::p_load(Rcpp, tidyverse,dplyr,tidyr,
                ggplot2,ggthemes,ggtext,scales,
-               png,ggalt,NHSRdatasets,onsr)
+               png,ggalt,NHSRdatasets,onsr,shinycssloaders)
 
 # install.packages('devtools')
 #devtools::install_github('nhs-r-community/NHSRtheme')
