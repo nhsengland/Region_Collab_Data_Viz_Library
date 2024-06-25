@@ -120,7 +120,7 @@ The next step loads the data and performs some simple filtering steps.
 
 All of the examples in this document use dummy data from the NHSRdatasets package (more information on this package can be found here: <https://github.com/nhs-r-community/NHSRtheme>). As the package is not in CRAN, you need to use devtools to load the package from github.
 
-```{r , warning = FALSE, echo = FALSE}
+```{r , warning = FALSE, echo = FALSE, warning = FALSE}
 
 remotes::install_github("nhs-r-community/NHSRtheme")
 
