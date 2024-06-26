@@ -35,10 +35,9 @@ For more information about each data visualisation type, the below are recommend
 if (!require("pacman")) install.packages("pacman"); library(pacman)
 
 pacman::p_load(Rcpp, tidyverse,dplyr,tidyr,
-               ggplot2,ggthemes,ggtext,scales,
+               ggplot2,ggthemes,ggtext,scales, 
                png,ggalt,NHSRdatasets,onsr,shinycssloaders,plotly)
-
-
+               
 # install.packages('devtools')
 #devtools::install_github('nhs-r-community/NHSRtheme')
 # install.packages("remotes")
@@ -75,7 +74,9 @@ Attends <- NHSRdatasets::ae_attendances %>%
 
 The below gets population by sex.
 
+
 ```{r , warning = FALSE, eval = false}
+
 # Load fingertipsR package
 library(fingertipsR)
 
@@ -456,10 +457,15 @@ ggplot(summary_data, aes(y = org_code)) +
 
 ```{r , warning = FALSE}
 
+Attends <- NHSRdatasets::ae_attendances %>%
+  filter(org_code == "RXQ"|org_code=="RTH"|org_code=="RHW"|
+           org_code == "RTK"|org_code == "RA2")
+
 # Plot the stacked area chart
 ggplot(Attends, aes(x = period, fill = org_code)) +
-  geom_area(stat = "count") +
+  geom_area(stat = "count") +  
   NHSRtheme::scale_fill_nhs("blues")
+
 ```
 
 ## Stacked bar chart
@@ -474,6 +480,41 @@ ggplot(Attends, aes(x = period, y = attendances, fill = org_code)) +
   NHSRtheme::scale_fill_nhs("blues")
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+
+```{r , warning = FALSE}
+
+# Plot the stacked area chart 
+
+blues <- c("#00A9CE", "#41B6E6", "#0072CE",   "#005EB8","#003087" )
+
+Attends <- NHSRdatasets::ae_attendances %>%
+  filter(org_code == "RXQ"|org_code=="RTH"|org_code=="RHW"|
+           org_code == "RTK"|org_code == "RA2") |>
+  # sort by unique code in reverse so the chart is stacked in opposite alphabet order
+  mutate(org_code = factor(org_code, levels = rev(sort(unique(org_code)))))
+
+plot_ly(data = Attends |> group_by(period, org_code) |>  summarise(count = n()) |> ungroup(),
+        x = ~period,
+        y = ~count,
+        color = ~org_code,
+        colors = blues,
+        type = 'scatter',
+        mode = 'none',
+        stackgroup = 'one',
+        line = list(colors = blues),
+        stackgroup = 'one') |>
+# solid fill colours to replicate the ggplot style
+  style(traces = 1, fillcolor = "#00A9CE") |>
+  style(traces = 2, fillcolor = "#41B6E6") |>
+  style(traces = 3, fillcolor = "#0072CE") |>
+  style(traces = 4, fillcolor = "#005EB8") |>
+  style(traces = 5, fillcolor = "#003087") |>
+  layout(legend = list(title = list(text = "org_code")))
+
+
+```
+
+
 
 # Creating multiple charts for the same measure
 
