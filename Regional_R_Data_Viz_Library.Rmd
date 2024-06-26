@@ -32,7 +32,7 @@ if (!require("pacman")) install.packages("pacman"); library(pacman)
 
 pacman::p_load(Rcpp, tidyverse,dplyr,tidyr,
                ggplot2,ggthemes,ggtext,scales,
-               png,ggalt,NHSRdatasets,onsr,shinycssloaders)
+               png,ggalt,NHSRdatasets,onsr,shinycssloaders, plotly)
 
 # install.packages('devtools')
 #devtools::install_github('nhs-r-community/NHSRtheme')
@@ -70,7 +70,7 @@ Attends <- NHSRdatasets::ae_attendances %>%
 
 The below gets population by sex.
 
-```{r , warning = FALSE}
+```{r , warning = FALSE, eval = FALSE}
 # Load fingertipsR package
 library(fingertipsR)
 
@@ -479,15 +479,48 @@ NEY TO ADD IN
 
 ```{r , warning = FALSE}
 
+Attends <- NHSRdatasets::ae_attendances %>%
+  filter(org_code == "RXQ"|org_code=="RTH"|org_code=="RHW"|
+           org_code == "RTK"|org_code == "RA2")
+
 # Plot the stacked area chart
 ggplot(Attends, aes(x = period, fill = org_code)) +
-  geom_area(stat = "count") +
+  geom_area(stat = "count") +  
   NHSRtheme::scale_fill_nhs("blues")
+
 ```
 
 ### Plotly
 
 NEY TO ADD IN
+
+```{r , warning = FALSE}
+
+# Plot the stacked area chart 
+
+blues <- c("#003087", "#005EB8", "#0072CE", "#41B6E6", "#00A9CE")
+
+color_scale <- setNames(blues, unique(Attends$org_code))
+
+
+Attends$org_code <- factor(Attends$org_code, levels = (unique(Attends$org_code)))
+
+plot_ly(data = Attends |> group_by(period, org_code) |>  summarise(count = n()) |> 
+          mutate(org_code = as.character(org_code)) |> ungroup(),
+        x = ~period,
+        y = ~count,
+        color = ~org_code,
+        colors = color_scale,
+        type = 'scatter',
+        mode = 'none',
+        fill = 'tozeroy',
+        line = list(colors = blues),
+        stackgroup = 'one') 
+
+
+```
+
+
 
 # Creating multiple charts for the same measure
 
