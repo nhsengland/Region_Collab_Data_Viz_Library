@@ -13,6 +13,10 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
+New Chart WM
+
+
 This library has been created to enable users to view examples of data visualisations utilising the NHS themes, using NHS public data sets. Users can load the required packages and create the sample data sets, and then choose which data visualisations they would like to run in their own environment.
 
 The foundations of this library are sourced from a GGplot guide by Mike Perham. This has been expanded as a proof of concept for working collaboratively over regions to input and build upon, becoming the R Data Viz Library.
@@ -31,9 +35,9 @@ For more information about each data visualisation type, the below are recommend
 if (!require("pacman")) install.packages("pacman"); library(pacman)
 
 pacman::p_load(Rcpp, tidyverse,dplyr,tidyr,
-               ggplot2,ggthemes,ggtext,scales,
-               png,ggalt,NHSRdatasets,onsr)
-
+               ggplot2,ggthemes,ggtext,scales, 
+               png,ggalt,NHSRdatasets,onsr,shinycssloaders,plotly)
+               
 # install.packages('devtools')
 #devtools::install_github('nhs-r-community/NHSRtheme')
 # install.packages("remotes")
@@ -70,7 +74,9 @@ Attends <- NHSRdatasets::ae_attendances %>%
 
 The below gets population by sex.
 
-```{r , warning = FALSE}
+
+```{r , warning = FALSE, eval = false}
+
 # Load fingertipsR package
 library(fingertipsR)
 
@@ -262,6 +268,46 @@ ggplot(AttendsAll, aes(fill = type, y = attendances, x = org_code)) +
   theme(legend.title = element_blank())
 
 ```
+
+### Plotly
+
+```{r , warning = FALSE, message = FALSE}
+#Perform any data manipulation needed
+
+
+AttendsAll$org_code <- as.character(AttendsAll$org_code)
+
+t1 <- AttendsAll %>%
+  filter(
+    org_code == "RXQ" | org_code == "RTH" | org_code == "RHW" |
+      org_code == "RTK" | org_code == "RA2"
+  ) %>%
+  filter(period == '2017-03-01')
+t1<- t1 %>% pivot_wider(names_from = type, values_from = attendances) 
+
+#--------------------------------
+#Plot the Chart
+
+plot_ly(t1, x = ~org_code, y = ~`1`, type = "bar", marker = list(color = '#003087'), name = 'Type 1') %>%  ##Set bar colours
+  add_trace(t1, x = ~org_code, y = ~`2`, marker = list(color = '#0072CE'), name = 'Type 2')%>% ## add next stack
+  add_trace(t1, x = ~org_code, y = ~other, marker = list(color = '#41B6E6'), name = 'Other')%>% ## add next stack
+                          
+  layout(title = 'A&E Attendances by department type - March 2017',                           ##set titles and axis labels
+         xaxis = list(title = "Organisation"),
+         yaxis = list(title = "Attendances"),
+         legend = list(),
+         barmode = 'stack') %>% 
+  
+  config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d", "select2d", "lasso2d", "toImage",   ##remove any unnecessary functions of plotly chart
+                                    "pan2d", "autoScale2d", "resetScale2d", "zoom2d"))
+
+```
+
+
+## Percent stacked bar chart {.tabset .tabset-fade}
+
+### ggplot
+
 ## Percent stacked bar chart
 
 ```{r , warning = FALSE}
@@ -411,10 +457,15 @@ ggplot(summary_data, aes(y = org_code)) +
 
 ```{r , warning = FALSE}
 
+Attends <- NHSRdatasets::ae_attendances %>%
+  filter(org_code == "RXQ"|org_code=="RTH"|org_code=="RHW"|
+           org_code == "RTK"|org_code == "RA2")
+
 # Plot the stacked area chart
 ggplot(Attends, aes(x = period, fill = org_code)) +
-  geom_area(stat = "count") +
+  geom_area(stat = "count") +  
   NHSRtheme::scale_fill_nhs("blues")
+
 ```
 
 ## Stacked bar chart
@@ -429,6 +480,43 @@ ggplot(Attends, aes(x = period, y = attendances, fill = org_code)) +
   NHSRtheme::scale_fill_nhs("blues")
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+
+```{r , warning = FALSE}
+
+# Plot the stacked area chart 
+
+blues <- c("#00A9CE", "#41B6E6", "#0072CE",   "#005EB8","#003087" )
+
+Attends <- NHSRdatasets::ae_attendances %>%
+  filter(org_code == "RXQ"|org_code=="RTH"|org_code=="RHW"|
+           org_code == "RTK"|org_code == "RA2") |>
+  # sort by unique code in reverse so the chart is stacked in opposite alphabet order
+  mutate(org_code = factor(org_code, levels = rev(sort(unique(org_code)))))
+
+plot_ly(data = Attends |> group_by(period, org_code) |>  summarise(count = n()) |> ungroup(),
+        x = ~period,
+        y = ~count,
+        color = ~org_code,
+        colors = blues,
+        type = 'scatter',
+        mode = 'none',
+        stackgroup = 'one',
+        line = list(colors = blues),
+        stackgroup = 'one') |>
+# solid fill colours to replicate the ggplot style
+  style(traces = 1, fillcolor = "#00A9CE") |>
+  style(traces = 2, fillcolor = "#41B6E6") |>
+  style(traces = 3, fillcolor = "#0072CE") |>
+  style(traces = 4, fillcolor = "#005EB8") |>
+  style(traces = 5, fillcolor = "#003087") |>
+  layout(legend = list(title = list(text = "org_code")),
+         xaxis = list(tickformat = "%Y",
+                      dtick = "M12"))
+
+
+```
+
+
 
 # Creating multiple charts for the same measure
 
