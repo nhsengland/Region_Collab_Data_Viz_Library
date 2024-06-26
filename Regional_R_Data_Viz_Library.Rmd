@@ -522,7 +522,9 @@ plot_ly(data = Attends |> group_by(period, org_code) |>  summarise(count = n()) 
   style(traces = 3, fillcolor = "#0072CE") |>
   style(traces = 4, fillcolor = "#005EB8") |>
   style(traces = 5, fillcolor = "#003087") |>
-  layout(legend = list(title = list(text = "org_code")))
+  layout(legend = list(title = list(text = "org_code")),
+         xaxis = list(tickformat = "%Y",
+                      dtick = "M12"))
 
 
 ```
