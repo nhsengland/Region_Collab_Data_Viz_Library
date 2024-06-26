@@ -13,7 +13,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Test Change
+New Chart WM
 
 This library has been created to enable users to view examples of data visualisations utilising the NHS themes, using NHS public data sets. Users can load the required packages and create the sample data sets, and then choose which data visualisations they would like to run in their own environment.
 
