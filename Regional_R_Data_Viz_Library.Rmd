@@ -36,7 +36,8 @@ if (!require("pacman")) install.packages("pacman"); library(pacman)
 
 pacman::p_load(Rcpp, tidyverse,dplyr,tidyr,
                ggplot2,ggthemes,ggtext,scales,
-               png,ggalt,NHSRdatasets,onsr)
+               png,ggalt,NHSRdatasets,onsr,shinycssloaders,plotly)
+
 
 # install.packages('devtools')
 #devtools::install_github('nhs-r-community/NHSRtheme')
@@ -74,7 +75,7 @@ Attends <- NHSRdatasets::ae_attendances %>%
 
 The below gets population by sex.
 
-```{r , warning = FALSE}
+```{r , warning = FALSE, eval = false}
 # Load fingertipsR package
 library(fingertipsR)
 
@@ -266,6 +267,46 @@ ggplot(AttendsAll, aes(fill = type, y = attendances, x = org_code)) +
   theme(legend.title = element_blank())
 
 ```
+
+### Plotly
+
+```{r , warning = FALSE, message = FALSE}
+#Perform any data manipulation needed
+
+
+AttendsAll$org_code <- as.character(AttendsAll$org_code)
+
+t1 <- AttendsAll %>%
+  filter(
+    org_code == "RXQ" | org_code == "RTH" | org_code == "RHW" |
+      org_code == "RTK" | org_code == "RA2"
+  ) %>%
+  filter(period == '2017-03-01')
+t1<- t1 %>% pivot_wider(names_from = type, values_from = attendances) 
+
+#--------------------------------
+#Plot the Chart
+
+plot_ly(t1, x = ~org_code, y = ~`1`, type = "bar", marker = list(color = '#003087'), name = 'Type 1') %>%  ##Set bar colours
+  add_trace(t1, x = ~org_code, y = ~`2`, marker = list(color = '#0072CE'), name = 'Type 2')%>% ## add next stack
+  add_trace(t1, x = ~org_code, y = ~other, marker = list(color = '#41B6E6'), name = 'Other')%>% ## add next stack
+                          
+  layout(title = 'A&E Attendances by department type - March 2017',                           ##set titles and axis labels
+         xaxis = list(title = "Organisation"),
+         yaxis = list(title = "Attendances"),
+         legend = list(),
+         barmode = 'stack') %>% 
+  
+  config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d", "select2d", "lasso2d", "toImage",   ##remove any unnecessary functions of plotly chart
+                                    "pan2d", "autoScale2d", "resetScale2d", "zoom2d"))
+
+```
+
+
+## Percent stacked bar chart {.tabset .tabset-fade}
+
+### ggplot
+
 ## Percent stacked bar chart
 
 ```{r , warning = FALSE}
