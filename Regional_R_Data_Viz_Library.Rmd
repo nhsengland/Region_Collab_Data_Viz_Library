@@ -13,8 +13,6 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-TEST FOR MS 
-
 This library has been created to enable users to view examples of data visualisations utilising the NHS themes, using NHS public data sets. Users can load the required packages and create the sample data sets, and then choose which data visualisations they would like to run in their own environment.
 
 The foundations of this library are sourced from a GGplot guide by Mike Perham. This has been expanded as a proof of concept for working collaboratively over regions to input and build upon, becoming the R Data Viz Library.
@@ -33,9 +31,9 @@ For more information about each data visualisation type, the below are recommend
 if (!require("pacman")) install.packages("pacman"); library(pacman)
 
 pacman::p_load(Rcpp, tidyverse,dplyr,tidyr,
-               ggplot2,ggthemes,ggtext,scales,
-               png,ggalt,NHSRdatasets,onsr,shinycssloaders)
-
+               ggplot2,ggthemes,ggtext,scales, 
+               png,ggalt,NHSRdatasets,onsr,shinycssloaders,plotly)
+               
 # install.packages('devtools')
 #devtools::install_github('nhs-r-community/NHSRtheme')
 # install.packages("remotes")
@@ -72,7 +70,8 @@ Attends <- NHSRdatasets::ae_attendances %>%
 
 The below gets population by sex.
 
-```{r , warning = FALSE, eval=FALSE}
+```{r , warning = FALSE, eval = false}
+
 # Load fingertipsR package
 library(fingertipsR)
 
@@ -122,19 +121,17 @@ The next step loads the data and performs some simple filtering steps.
 
 All of the examples in this document use dummy data from the NHSRdatasets package (more information on this package can be found here: <https://github.com/nhs-r-community/NHSRtheme>). As the package is not in CRAN, you need to use devtools to load the package from github.
 
-```{r , warning = FALSE, echo = FALSE, warning = FALSE}
+```{r , warning = FALSE}
+#install.packages("remotes")
+#remotes::install_github("nhs-r-community/NHSRtheme")
 
-remotes::install_github("nhs-r-community/NHSRtheme")
-
-NHSRtheme::get_nhs_colours()
+#NHSRtheme::get_nhs_colours()
 
 ```
 
-# Data Over Time 
+# Data Over Time
 
-## Basic line chart {.tabset .tabset-fade}
-
-### ggplot
+## Basic line chart
 
 ```{r , warning = FALSE}
 #Filter initial dataset
@@ -153,13 +150,7 @@ ggplot(line_df, aes(x = period, y = attendances)) +
 
 ```
 
-### Plotly
-
-NEY TO ADD IN
-
-## Multiple line chart {.tabset .tabset-fade}
-
-### ggplot
+## Multiple line chart
 
 ```{r , warning = FALSE}
 #Filter initial dataset
@@ -184,19 +175,9 @@ ggplot(multiple_line_df,
 
 ```
 
-### Plotly
-
-NEY TO ADD IN
-
-## SPC Charts
-
-NEY TO ADD IN
-
 # Comparisons
 
-## Simple bar chart {.tabset .tabset-fade}
-
-### ggplot
+## Simple bar chart
 
 ```{r , warning = FALSE}
 #Filter initial dataset
@@ -223,7 +204,7 @@ plot(bar)
 
 ```
 
-**Add labels**
+### Add labels
 
 The code below adds labels to your simple bar chart.
 
@@ -233,13 +214,7 @@ bar + geom_text(aes(label = scales::comma(attendances)), vjust =2, color= "White
 
 ```
 
-### Plotly
-
-NEY TO ADD IN
-
-## Grouped bar chart {.tabset .tabset-fade}
-
-### ggplot
+## Grouped bar chart
 
 ```{r , warning = FALSE}
 #Filter initial dataset
@@ -269,16 +244,9 @@ ggplot(grouped_bar_df,
   theme(legend.title = element_blank())
 
 ```
+## Stacked bar chart
 
-### Plotly
-
-NEY TO ADD IN
-
-## Stacked bar chart {.tabset .tabset-fade}
-
-### ggplot
-
-```{r , warning = FALSE, message = FALSE}
+```{r , warning = FALSE}
 AttendsAll <- NHSRdatasets::ae_attendances %>%
   filter(
     org_code == "RXQ" | org_code == "RTH" | org_code == "RHW" |
@@ -298,7 +266,38 @@ ggplot(AttendsAll, aes(fill = type, y = attendances, x = org_code)) +
 
 ### Plotly
 
-NEY TO ADD IN
+```{r , warning = FALSE, message = FALSE}
+#Perform any data manipulation needed
+
+
+AttendsAll$org_code <- as.character(AttendsAll$org_code)
+
+t1 <- AttendsAll %>%
+  filter(
+    org_code == "RXQ" | org_code == "RTH" | org_code == "RHW" |
+      org_code == "RTK" | org_code == "RA2"
+  ) %>%
+  filter(period == '2017-03-01')
+t1<- t1 %>% pivot_wider(names_from = type, values_from = attendances) 
+
+#--------------------------------
+#Plot the Chart
+
+plot_ly(t1, x = ~org_code, y = ~`1`, type = "bar", marker = list(color = '#003087'), name = 'Type 1') %>%  ##Set bar colours
+  add_trace(t1, x = ~org_code, y = ~`2`, marker = list(color = '#0072CE'), name = 'Type 2')%>% ## add next stack
+  add_trace(t1, x = ~org_code, y = ~other, marker = list(color = '#41B6E6'), name = 'Other')%>% ## add next stack
+                          
+  layout(title = 'A&E Attendances by department type - March 2017',                           ##set titles and axis labels
+         xaxis = list(title = "Organisation"),
+         yaxis = list(title = "Attendances"),
+         legend = list(),
+         barmode = 'stack') %>% 
+  
+  config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d", "select2d", "lasso2d", "toImage",   ##remove any unnecessary functions of plotly chart
+                                    "pan2d", "autoScale2d", "resetScale2d", "zoom2d"))
+
+```
+
 
 ## Percent stacked bar chart {.tabset .tabset-fade}
 
@@ -366,12 +365,7 @@ plot_ly(Attends_wide_per, x = ~org_code, y = ~`1`, type = "bar", marker = list(c
                                     "pan2d", "autoScale2d", "resetScale2d", "zoom2d"))
 
  
-
-
 ```
-
-NEY TO ADD IN
-
 ## Bubble chart {.tabset .tabset-fade}
 
 ### ggplot
@@ -444,13 +438,7 @@ ggplot(bubble_df, aes(x = perc_admissions_attendances, y = perc_breaches_attenda
   theme(legend.position = "right")
 ```
 
-### Plotly
-
-NEY TO ADD IN
-
-## Population Pyramid chart {.tabset .tabset-fade}
-
-### ggplot
+## Population Pyramid chart
 
 ```{r , warning = FALSE}
 # Plot the population pyramid
@@ -465,10 +453,6 @@ ggplot(population_data_filtered, aes(x = Age, y = Value, fill = Sex)) +
   NHSRtheme::scale_fill_nhs("blues")
 ```
 
-### Plotly
-
-NEY TO ADD IN
-
 ## Radar chart
 
 Insert here
@@ -477,9 +461,7 @@ Insert here
 
 Insert here
 
-## Radial Column chart {.tabset .tabset-fade}
-
-### ggplot
+## Radial Column chart
 
 ```{r , warning = FALSE}
 
@@ -493,13 +475,7 @@ ggplot(Attends, aes(x = reorder(org_code, -attendances), y = attendances)) +
        x = NULL, y = NULL)
 ```
 
-### Plotly
-
-NEY TO ADD IN
-
-## Span chart {.tabset .tabset-fade}
-
-### ggplot
+## Span chart
 
 ```{r , warning = FALSE}
 # Summarize the data
@@ -517,25 +493,70 @@ ggplot(summary_data, aes(y = org_code)) +
    NHSRtheme::scale_fill_nhs("blues")
 ```
 
-### Plotly
-
-NEY TO ADD IN
-
-## Stacked area chart {.tabset .tabset-fade}
-
-### ggplot
+## Stacked area chart
 
 ```{r , warning = FALSE}
 
+Attends <- NHSRdatasets::ae_attendances %>%
+  filter(org_code == "RXQ"|org_code=="RTH"|org_code=="RHW"|
+           org_code == "RTK"|org_code == "RA2")
+
 # Plot the stacked area chart
 ggplot(Attends, aes(x = period, fill = org_code)) +
-  geom_area(stat = "count") +
+  geom_area(stat = "count") +  
   NHSRtheme::scale_fill_nhs("blues")
+
 ```
 
-### Plotly
+## Stacked bar chart
 
-NEY TO ADD IN
+```{r , warning = FALSE}
+ggplot(Attends, aes(x = period, y = attendances, fill = org_code)) +
+  geom_bar(stat = "identity") +
+  labs(title = "A&E Attendances by Trust",
+       x = "Period",
+       y = "Number of Attendances",
+       fill = "Organisation Code") +
+  NHSRtheme::scale_fill_nhs("blues")
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r , warning = FALSE}
+
+# Plot the stacked area chart 
+
+blues <- c("#00A9CE", "#41B6E6", "#0072CE",   "#005EB8","#003087" )
+
+Attends <- NHSRdatasets::ae_attendances %>%
+  filter(org_code == "RXQ"|org_code=="RTH"|org_code=="RHW"|
+           org_code == "RTK"|org_code == "RA2") |>
+  # sort by unique code in reverse so the chart is stacked in opposite alphabet order
+  mutate(org_code = factor(org_code, levels = rev(sort(unique(org_code)))))
+
+plot_ly(data = Attends |> group_by(period, org_code) |>  summarise(count = n()) |> ungroup(),
+        x = ~period,
+        y = ~count,
+        color = ~org_code,
+        colors = blues,
+        type = 'scatter',
+        mode = 'none',
+        stackgroup = 'one',
+        line = list(colors = blues),
+        stackgroup = 'one') |>
+# solid fill colours to replicate the ggplot style
+  style(traces = 1, fillcolor = "#00A9CE") |>
+  style(traces = 2, fillcolor = "#41B6E6") |>
+  style(traces = 3, fillcolor = "#0072CE") |>
+  style(traces = 4, fillcolor = "#005EB8") |>
+  style(traces = 5, fillcolor = "#003087") |>
+  layout(legend = list(title = list(text = "org_code")),
+         xaxis = list(tickformat = "%Y",
+                      dtick = "M12"))
+
+
+```
+
+
 
 # Creating multiple charts for the same measure
 
@@ -579,10 +600,6 @@ Insert here
 
 Insert here
 
-## Funnel Plot
-
-NEY TO ADD IN
-
 ## Gantt chart
 
 Insert here
@@ -604,9 +621,7 @@ ggplot(Attends, aes(org_code, attendances)) + geom_violin() +
   labs(title="A&E Attendances", subtitle="Range by Trust", caption="Source: A&E Monthly Statistics", x="Trust", y="Attendances") + scale_fill_brewer(palette="Blues") + theme_classic()
 ```
 
-## Dumbell chart {.tabset .tabset-fade}
-
-### ggplot
+## Dumbell chart
 
 The `ggtext` package can be used to add colour to titles or subtitles. You need to ensure that you use it with `theme(plot.subtitle = element_markdown(hjust = 0, size = 12))` otherwise it will not work.
 
@@ -642,7 +657,7 @@ dumbell <- ggplot(dumbbell_df, aes(x = `2017`, xend = `2019`, y = reorder(org_co
 plot(dumbell)
 ```
 
-**Adding annotations**
+### Adding annotations
 
 You can use `geom_label` to add annotations to existing plots or you can add line in when creating ggplot.
 
@@ -657,13 +672,3 @@ dumbell + geom_label(aes(x = 0.9, y = "R1K",label = "Standard"),
                            size = 4)
 
 ```
-
-### Plotly
-
-NEY TO ADD IN
-
-# Movement or Flow
-
-## Sankey Diagram
-
-NEY TO ADD IN
