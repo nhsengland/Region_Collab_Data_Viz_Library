@@ -32,8 +32,7 @@ if (!require("pacman")) install.packages("pacman"); library(pacman)
 
 pacman::p_load(Rcpp, tidyverse,dplyr,tidyr,
                ggplot2,ggthemes,ggtext,scales,
-               png,ggalt,NHSRdatasets,onsr,shinycssloaders,plotly)
-
+               png,ggalt,NHSRdatasets,onsr,shinycssloaders, knitr, plotly)
 
 # install.packages('devtools')
 #devtools::install_github('nhs-r-community/NHSRtheme')
@@ -234,8 +233,76 @@ bar + geom_text(aes(label = scales::comma(attendances)), vjust =2, color= "White
 ```
 
 ### Plotly
+```{r , warning = FALSE}
+#install all necessary packages
 
-NEY TO ADD IN
+# Specify your packages
+my_packages <- c("tidyverse", "plotly", "readxl") 
+
+# Extract not installed packages
+not_installed <- my_packages[!(my_packages %in% installed.packages()[ , "Package"])]    
+
+# Install not installed packages
+if(length(not_installed)) install.packages(not_installed)                               
+
+# Load all packages
+lapply(my_packages, library, character.only = TRUE)                                     
+
+#-----------------------------------
+#Perform any data manipulation needed
+
+##Filter the data to select just the region
+simple_bar_data <- Attends %>% filter(period == "2019-03-01")   
+
+## Tell the x axis to keep the data in the same order not rearrange alphabetically (this is only needed if the x axis is a character not a date )
+#xform <- list(categoryorder = "array", categoryarray = Attends$org_code) 
+
+Attends$org_code <- as.character(Attends$org_code)
+
+#--------------------------------
+#Plot the Chart
+
+##Set bar colours
+simple_bar_blue <- plot_ly(simple_bar_data, x = ~org_code, y = ~attendances, type = "bar", colors = '#005EB8') %>%
+
+##set titles and axis labels    
+  layout(title = list(text = '<b>Type 1 attendances</b><br><sup>March 2019</sup>', x = 0, xanchor= 'left'),                           
+         xaxis = list(title = "Provider Code"),
+         yaxis = list(title = "Attendances"),
+         legend = list() ) %>%
+  
+##remove any unnecessary functions of plotly chart
+config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d", "select2d", "lasso2d", "toImage",   
+                                    "pan2d", "autoScale2d", "resetScale2d", "zoom2d"))
+
+simple_bar_blue
+
+```
+
+**Add labels**
+
+The code below adds labels to your simple bar chart.
+
+```{r , warning = FALSE}
+#Plot the Chart
+
+##Set bar colours
+simple_bar_blue <- plot_ly(simple_bar_data, x = ~org_code, y = ~attendances, type = "bar", text = ~attendances, textposition = 'auto', marker = list(color = '#005EB8', line = list(colour ='#FFFFFF'), width = 1.5)) %>%
+
+##set titles and axis labels    
+  layout(title = list(text = '<b>Type 1 attendances</b><br><sup>March 2019</sup>', x = 0, xanchor= 'left'),                           
+         xaxis = list(title = "Provider Code"),
+         yaxis = list(title = "Attendances"),
+         legend = list() ) %>%
+  
+##remove any unnecessary functions of plotly chart
+config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d", "select2d", "lasso2d", "toImage",   
+                                    "pan2d", "autoScale2d", "resetScale2d", "zoom2d"))
+
+simple_bar_blue
+
+```
+
 
 ## Grouped bar chart {.tabset .tabset-fade}
 
