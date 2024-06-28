@@ -60,7 +60,9 @@ More information on these packages can be found here:
 
 ```{r , warning = FALSE}
 #Load initial dataset and clean up
-Attends <- NHSRdatasets::ae_attendances %>%
+Attends_1 <- NHSRdatasets::ae_attendances 
+Attends_1$org_code <- as.character(Attends_1$org_code)
+Attends <- Attends_1 %>%
   filter(org_code == "RXQ"|org_code=="RTH"|org_code=="RHW"|
            org_code == "RTK"|org_code == "RA2") %>%
   filter(type ==1) %>%
@@ -238,30 +240,12 @@ bar + geom_text(aes(label = scales::comma(attendances)), vjust =2, color= "White
 
 ### Plotly
 ```{r , warning = FALSE}
-#install all necessary packages
-
-# Specify your packages
-my_packages <- c("tidyverse", "plotly", "readxl") 
-
-# Extract not installed packages
-not_installed <- my_packages[!(my_packages %in% installed.packages()[ , "Package"])]    
-
-# Install not installed packages
-if(length(not_installed)) install.packages(not_installed)                               
-
-# Load all packages
-lapply(my_packages, library, character.only = TRUE)                                     
-
+                              
 #-----------------------------------
 #Perform any data manipulation needed
 
-##Filter the data to select just the region
+##Filter the data to select just the most recent date
 simple_bar_data <- Attends %>% filter(period == "2019-03-01")   
-
-## Tell the x axis to keep the data in the same order not rearrange alphabetically (this is only needed if the x axis is a character not a date )
-#xform <- list(categoryorder = "array", categoryarray = Attends$org_code) 
-
-Attends$org_code <- as.character(Attends$org_code)
 
 #--------------------------------
 #Plot the Chart
@@ -676,9 +660,7 @@ ggplot(Attends, aes(x = period, fill = org_code)) +
 
 ### Plotly
 
-NEY TO ADD IN
-
-```{r , warning = FALSE}
+```{r , warning = FALSE, message = FALSE}
 
 # Plot the stacked area chart 
 
