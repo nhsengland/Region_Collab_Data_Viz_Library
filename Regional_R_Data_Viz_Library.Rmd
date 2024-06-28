@@ -31,9 +31,9 @@ For more information about each data visualisation type, the below are recommend
 if (!require("pacman")) install.packages("pacman"); library(pacman)
 
 pacman::p_load(Rcpp, tidyverse,dplyr,tidyr,
-               ggplot2,ggthemes,ggtext,scales, 
-               png,ggalt,NHSRdatasets,onsr,shinycssloaders,plotly)
-               
+               ggplot2,ggthemes,ggtext,scales,
+               png,ggalt,NHSRdatasets,onsr,shinycssloaders, plotly, FunnelPlotR)
+
 # install.packages('devtools')
 #devtools::install_github('nhs-r-community/NHSRtheme')
 # install.packages("remotes")
@@ -440,7 +440,7 @@ ggplot(bubble_df, aes(x = perc_admissions_attendances, y = perc_breaches_attenda
 
 ## Population Pyramid chart
 
-```{r , warning = FALSE}
+```{r , warning = FALSE, eval=FALSE}
 # Plot the population pyramid
 ggplot(population_data_filtered, aes(x = Age, y = Value, fill = Sex)) +
   geom_bar(stat = "identity", position = "identity") +
@@ -599,6 +599,34 @@ Insert here
 ## Error bars chart
 
 Insert here
+
+## Funnel Plot
+
+```{r , warning = FALSE}
+
+MyAttends <- NHSRdatasets::ae_attendances %>%
+  filter(period == '2017-03-01') %>%
+  filter(type ==1) # %>%
+  # select(-c(3,5)) 
+
+MyAttends$org_code <- as.character(MyAttends$org_code)
+
+funnel_plot(.data = MyAttends,
+            numerator= breaches, #Specify the numerator
+            denominator=attendances, #Specify the denominator
+            group = org_code, #Specify that we want to plot Trust Names
+            title = "A&E breaches", #Specify the chart title
+            draw_adjusted = TRUE, #Specify that we want to adjust the control limits to account for over-dispersion
+            sr_method = "SHMI", #Specify to adjust for over-dispersion using the CQC Methodology (can also use SHMI)
+            # label = "highlight", #Specify that we want to use the 'highlight' argument to show outliers 
+            # highlight=HighLight, #Get the highlight argument to reference the list of outlier NEY trusts 
+            data_type="PR", #Specify the indicator is a proportion
+            limit=95, #Specify to show both 95 and 99.8% control limits 
+            multiplier = 100, 
+            y_label = "% breaches", #Specify the X Axis Label
+            x_label = "No. of attendances") #Specify the Y Axis Label
+
+```       
 
 ## Gantt chart
 
