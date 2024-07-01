@@ -32,7 +32,7 @@ if (!require("pacman")) install.packages("pacman"); library(pacman)
 
 pacman::p_load(Rcpp, tidyverse,dplyr,tidyr,
                ggplot2,ggthemes,ggtext,scales,
-               png,ggalt,NHSRdatasets,onsr,shinycssloaders, knitr, plotly)
+               png,ggalt,NHSRdatasets,onsr,shinycssloaders, plotly, FunnelPlotR)
 
 # install.packages('devtools')
 #devtools::install_github('nhs-r-community/NHSRtheme')
@@ -406,7 +406,49 @@ ggplot(AttendsAll, aes(fill = type, y = attendances, x = org_code)) +
 
 ### Plotly
 
-NEY TO ADD IN
+```{r , warning = FALSE}
+Attends <- NHSRdatasets::ae_attendances %>%
+  filter(
+    org_code == "RXQ" | org_code == "RTH" | org_code == "RHW" |
+      org_code == "RTK" | org_code == "RA2"
+  ) %>%
+  filter(period == '2017-03-01') |> 
+  select(period,
+         org_code,
+         type,
+         attendances)
+
+#Remove orgs that still appear in chart despite being filtered out!
+Attends$org_code <- as.character(Attends$org_code)
+
+#Restructure data so it works for stacked bar chart
+Attends_wide <-Attends |> 
+  pivot_wider(names_from = type, values_from = attendances, values_fill = 0)
+
+#Create copy with values as percent for charts
+Attends_wide_per<- Attends_wide
+Attends_wide_per[, -c(1,2)] <- Attends_wide[, -c(1,2)] / rowSums(Attends_wide[, -c(1,2)]) #* 100
+
+#rm(list = ls())
+#--------------------------------
+#Plot the Chart
+
+plot_ly(Attends_wide_per, x = ~org_code, y = ~`1`, type = "bar", marker = list(color = '#003087'), name = 'Type 1') %>%  ##Set bar colours
+  add_trace(Attends_wide_per, x = ~org_code, y = ~`2`, marker = list(color = '#0072CE'), name = 'Type 2')%>% ## add next stack
+  add_trace(Attends_wide_per, x = ~org_code, y = ~other, marker = list(color = '#41B6E6'), name = 'Other')%>% ## add next stack
+                          
+  layout(title = 'Simple Blue Percentage Stacked Bar Chart',                           ##set titles and axis labels
+         xaxis = list(title = "Organisation Code"),
+         yaxis = list(title = "Attendances March 2017",
+                      tickformat = ".0%"),
+         legend = list(),
+         barmode = 'stack') %>% 
+  
+  config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d", "select2d", "lasso2d", "toImage",   ##remove any unnecessary functions of plotly chart
+                                    "pan2d", "autoScale2d", "resetScale2d", "zoom2d"))
+
+ 
+```
 
 ## Bubble chart {.tabset .tabset-fade}
 
@@ -488,7 +530,8 @@ NEY TO ADD IN
 
 ### ggplot
 
-```{r , warning = FALSE,eval=FALSE}
+```{r , warning = FALSE,eval = FALSE}
+
 # Plot the population pyramid
 ggplot(population_data_filtered, aes(x = Age, y = Value, fill = Sex)) +
   geom_bar(stat = "identity", position = "identity") +
@@ -657,7 +700,31 @@ Insert here
 
 ## Funnel Plot
 
-NEY TO ADD IN
+```{r , warning = FALSE}
+
+MyAttends <- NHSRdatasets::ae_attendances %>%
+  filter(period == '2017-03-01') %>%
+  filter(type ==1) # %>%
+  # select(-c(3,5)) 
+
+MyAttends$org_code <- as.character(MyAttends$org_code)
+
+funnel_plot(.data = MyAttends,
+            numerator= breaches, #Specify the numerator
+            denominator=attendances, #Specify the denominator
+            group = org_code, #Specify that we want to plot Trust Names
+            title = "A&E breaches", #Specify the chart title
+            draw_adjusted = TRUE, #Specify that we want to adjust the control limits to account for over-dispersion
+            sr_method = "SHMI", #Specify to adjust for over-dispersion using the CQC Methodology (can also use SHMI)
+            # label = "highlight", #Specify that we want to use the 'highlight' argument to show outliers 
+            # highlight=HighLight, #Get the highlight argument to reference the list of outlier NEY trusts 
+            data_type="PR", #Specify the indicator is a proportion
+            limit=95, #Specify to show both 95 and 99.8% control limits 
+            multiplier = 100, 
+            y_label = "% breaches", #Specify the X Axis Label
+            x_label = "No. of attendances") #Specify the Y Axis Label
+
+```       
 
 ## Gantt chart
 
