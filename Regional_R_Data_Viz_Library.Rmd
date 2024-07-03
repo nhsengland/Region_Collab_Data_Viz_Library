@@ -70,7 +70,7 @@ Attends <- NHSRdatasets::ae_attendances %>%
 
 The below gets population by sex.
 
-```{r , warning = FALSE}
+```{r , warning = FALSE, eval = FALSE}
 # Load fingertipsR package
 library(fingertipsR)
 
@@ -354,7 +354,7 @@ ggplot(bubble_df, aes(x = perc_admissions_attendances, y = perc_breaches_attenda
 
 ## Population Pyramid chart
 
-```{r , warning = FALSE}
+```{r , warning = FALSE, eval=FALSE}
 # Plot the population pyramid
 ggplot(population_data_filtered, aes(x = Age, y = Value, fill = Sex)) +
   geom_bar(stat = "identity", position = "identity") +
