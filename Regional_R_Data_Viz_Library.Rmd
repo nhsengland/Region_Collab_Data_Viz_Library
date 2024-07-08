@@ -156,7 +156,24 @@ ggplot(line_df, aes(x = period, y = attendances)) +
 
 ### Plotly
 
-NEY TO ADD IN
+```{r , warning = FALSE}
+#Filter initial dataset
+line_df <- Attends %>%
+  filter(org_code=="RXQ")
+  
+line_df <- line_df[order(line_df$period),] #Order the data frame by the date in ascending order - required for the chart to plot properly
+
+# Plotly Chart
+plot_ly(line_df, x = ~period, y = ~attendances, type = 'scatter', mode = 'lines',  ##Plot the first line as dots in NHS Grey
+            line = list(color = "#005EB8", width = 3, dash = 'line'))  %>% 
+  
+   layout(title = "Type 1 attendances - Bucks Healthcare", ##set titles and axis labels
+         xaxis = list (title = "Month"),
+         yaxis = list (title ="Attendances", range = c(0, max(line_df$attendances) * 1.1))) %>%  #Align the y axis scales with the ggplot chart
+  
+  config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d", "select2d", "lasso2d", "toImage",   ##remove any unnecessary functions of plotly chart
+                                    "pan2d", "autoScale2d", "resetScale2d", "zoom2d"))
+```
 
 ## Multiple line chart {.tabset .tabset-fade}
 
