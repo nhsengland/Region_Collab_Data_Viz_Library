@@ -32,8 +32,8 @@ if (!require("pacman")) install.packages("pacman"); library(pacman)
 
 pacman::p_load(Rcpp, tidyverse,dplyr,tidyr,
                ggplot2,ggthemes,ggtext,scales,
-               png,ggalt,NHSRdatasets,onsr,shinycssloaders)
-
+               png,ggalt,NHSRdatasets,onsr,shinycssloaders,plotly)
+#install.packages("knitr")
 # install.packages('devtools')
 #devtools::install_github('nhs-r-community/NHSRtheme')
 # install.packages("remotes")
@@ -70,7 +70,7 @@ Attends <- NHSRdatasets::ae_attendances %>%
 
 The below gets population by sex.
 
-```{r , warning = FALSE}
+```{r , warning = FALSE, eval=FALSE}
 # Load fingertipsR package
 library(fingertipsR)
 
@@ -184,7 +184,41 @@ ggplot(multiple_line_df,
 
 ### Plotly
 
-NEY TO ADD IN
+```{r , warning = FALSE}
+#Filter initial dataset
+multiple_line_rxq <- Attends %>%
+  filter(org_code == "RXQ") %>%
+  rename(attendrxq=attendances)
+
+multiple_line_rth <- Attends %>%
+  filter(org_code=="RTH") %>%
+  rename(attend_rth=attendances) 
+
+line_rth = subset(multiple_line_rth, select = -c(admissions, org_code))
+
+line_rxq = subset(multiple_line_rxq, select = -c(admissions, org_code))
+
+multiple_line_data <-
+  merge(line_rth, line_rxq)
+
+
+p<- plot_ly(multiple_line_data, x = ~period, y = ~multiple_line_data$attend_rth, name = 'RTH', type = 'scatter', mode = 'lines',  ##Plot the first line as dots
+        line = list(color = 'rgb(118, 134)', width = 3, dash = 'dot'))  %>% 
+  
+  add_trace(y = ~multiple_line_data$attendrxq, name = 'RXQ', line = list(color = 'blue', width = 3, dash = 'solid'))%>%  ##Plot a second line in NHS blue
+  
+  layout(title = 'Time Series Line Chart',                           ##set titles and axis labels
+         xaxis = list (title = "Year"),
+         yaxis = list (title = "Attendances")
+         ) %>%  
+  
+  config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d", "select2d", "lasso2d", "toImage",   ##remove any unnecessary functions of plotly chart
+                                    "pan2d", "autoScale2d", "resetScale2d", "zoom2d"))
+
+p
+
+```
+
 
 ## SPC Charts
 
