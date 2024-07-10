@@ -639,7 +639,50 @@ dumbell + geom_label(aes(x = 0.9, y = "R1K",label = "Standard"),
 
 ### Plotly
 
-NEY TO ADD IN
+```{r, warning = FALSE}
+dumbbellplotly_df <- dumbbell_df
+dumbbellplotly_df$org_code <- as.character(dumbbellplotly_df$org_code)
+dumbbellplotly_df$`2017`<- round(dumbbellplotly_df$`2017`*100,1) 
+dumbbellplotly_df$`2019`<- round(dumbbellplotly_df$`2019`*100,1)
+dumbbellplotly_df$`gap`<- round(dumbbellplotly_df$`gap`*100,1) 
+## Region chart  This sets up a blank plotly object to begin with 
+ dumbellplotly<- plot_ly(dumbbellplotly_df, color = I("gray80")) 
+## It then adds a line for each 'org_code that starts at 2017 and goes through to the 2019 number 
+ dumbellplotly <-dumbellplotly %>% add_segments(x = ~dumbbellplotly_df$`2017`, xend = ~dumbbellplotly_df$`2019`, y = ~org_code, yend = ~org_code, showlegend = FALSE)
+# It then adds a dot on the 2017 end of the line in red 
+dumbellplotly <- dumbellplotly %>% add_markers(x = ~dumbbellplotly_df$`2017`, y = ~org_code, name = "2017", color = I("#AE2573"),size = 8 )
+# It then adds a dot on the 2019 end of the line in blue 
+dumbellplotly <- dumbellplotly %>% add_markers(x = ~dumbbellplotly_df$`2019`,y = ~org_code, name = "2019", color = I("#0072CE"),size = 8 )
+#The titles are then added 
+dumbellplotly<- dumbellplotly %>% layout( title = "Performance improved for all providers",   
+xaxis = list(title = "4 hour performance", ticksuffix="%"), margin = list(l = 65),
+    shapes = list(list(type = "line",
+    x0 = 95, 
+    x1 = 95,
+    y0 = 0,
+    y1 = "RXC",
+    ref = "x",
+     yref = "y",
+    line = list(color="#333333",dash = "dash"))),
+    annotations = list(
+             list(
+               x = 95,
+               y = "RXC",
+               xref = "x",
+               yref = "y",
+               text = "Standard (95%)",
+               showarrow = TRUE,
+               arrowhead = 2,
+               # ax = 20,
+               # ay = -30,
+               font = list(color = "555555#")
+            )))
+
+dumbellplotly
+
+```
+
+
 
 # Movement or Flow
 
