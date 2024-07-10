@@ -207,7 +207,7 @@ p<- plot_ly(multiple_line_data, x = ~period, y = ~multiple_line_data$attend_rth,
   
   add_trace(y = ~multiple_line_data$attendrxq, name = 'RXQ', line = list(color = 'blue', width = 3, dash = 'solid'))%>%  ##Plot a second line in NHS blue
   
-  layout(title = 'Time Series Line Chart',                           ##set titles and axis labels
+  layout(title = 'Time Series Line Chart',                 ##set titles and axis labels
          xaxis = list (title = "Year"),
          yaxis = list (title = "Attendances")
          ) %>%  
