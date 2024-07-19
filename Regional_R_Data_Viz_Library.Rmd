@@ -72,7 +72,7 @@ Attends <- NHSRdatasets::ae_attendances %>%
 
 The below gets population by sex.
 
-```{r , warning = FALSE}
+```{r , warning = FALSE, eval = FALSE}
 # Load fingertipsR package
 library(fingertipsR)
 
@@ -190,7 +190,10 @@ NEY TO ADD IN
 
 ## SPC Charts
 
-NEY TO ADD IN
+```{r, warning = FALSE}
+
+```
+
 
 # Comparisons
 
@@ -400,13 +403,80 @@ ggplot(bubble_df, aes(x = perc_admissions_attendances, y = perc_breaches_attenda
 
 ### Plotly
 
-NEY TO ADD IN
+```{r, warning = FALSE}
+
+#For this example we are filtering on 5 organisations, type 1 activity & excluding column 3 from the dataframe.
+Attends <- NHSRdatasets::ae_attendances %>%
+  filter(org_code == "RXQ"|org_code=="RTH"|org_code=="RHW"|
+           org_code == "RTK"|org_code == "RA2")
+
+# Summarise data for type 1 attendances
+  type_1_summary <- Attends %>%
+  filter(type == 1) %>%
+  group_by(org_code, period) %>%
+  summarise(type_1_attendances = sum(attendances, na.rm = TRUE)) %>%
+  ungroup()
+
+# Summarise data for non-type 1 attendances
+type_other_summary <- Attends %>%
+  filter(type == 3|type== 2) %>%
+  group_by(org_code, period) %>%
+  summarise(type_other_attendances = sum(attendances, na.rm = TRUE)) %>%
+  ungroup()
+
+# Summarise total attendances and total admissions
+total_summary <- Attends %>%
+  group_by(org_code, period) %>%
+  summarise(
+    total_attendances = sum(attendances, na.rm = TRUE),
+    total_breaches = sum(breaches, na.rm = TRUE),
+    total_admissions = sum(admissions, na.rm = TRUE)
+  ) %>%
+  ungroup()
+
+# Merge the summaries into a single data frame
+final_summary <- total_summary %>%
+  left_join(type_1_summary, by = c("org_code", "period")) %>%
+  left_join(type_other_summary, by = c("org_code", "period"))
+
+# Replace NA values with 0 for type_1_attendances and type_3_attendances
+final_summary <- final_summary %>%
+  mutate(
+    type_1_attendances = replace_na(type_1_attendances, 0),
+    type_other_attendances = replace_na(type_other_attendances, 0)
+  )
+
+# Add percentage columns
+final_summary <- final_summary %>%
+  mutate(
+    perc_admissions_attendances = (total_admissions / total_attendances) * 100,
+    perc_type1_attendances_total = (type_1_attendances / total_attendances) * 100,
+    perc_breaches_attendances = (total_breaches / total_attendances) * 100
+  )
+
+# Filter initial dataset
+bubble_df <- final_summary
+
+# Calculate size for bubble chart (proportional to type 1 attendances)
+bubble_df <- bubble_df %>%
+  mutate(size = perc_type1_attendances_total / max(perc_type1_attendances_total) * 100)
+
+
+# Create bubble chart
+plot_ly(bubble_df, x = ~perc_admissions_attendances, y = ~perc_breaches_attendances, text = "Proportion of type 1", type = 'scatter', mode = 'markers', color = ~size, colors = 'Blues', size = ~size, sizes = c(5,20),
+        marker = list(sizemode = 'diameter', opacity = 0.7)) %>% 
+  layout(title = 'Bubble Chart of % 4 Hour Breaches vs \n % converted to admission with % Attendances Type 1 Size',
+         xaxis = list(showgrid = FALSE, title = "Conversion Rate"),
+         yaxis = list(showgrid = FALSE, title = "% 4 Hour Breaches"))
+
+```
+
 
 ## Population Pyramid chart {.tabset .tabset-fade}
 
 ### ggplot
 
-```{r , warning = FALSE}
+```{r , warning = FALSE, eval = FALSE}
 # Plot the population pyramid
 ggplot(population_data_filtered, aes(x = Age, y = Value, fill = Sex)) +
   geom_bar(stat = "identity", position = "identity") +
