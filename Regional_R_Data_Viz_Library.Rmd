@@ -32,8 +32,7 @@ if (!require("pacman")) install.packages("pacman"); library(pacman)
 
 pacman::p_load(Rcpp, tidyverse,dplyr,tidyr,
                ggplot2,ggthemes,ggtext,scales,
-                png,ggalt,NHSRdatasets,onsr,shinycssloaders, plotly, FunnelPlotR)
-
+               png,ggalt,NHSRdatasets,onsr,shinycssloaders, plotly, networkD3, FunnelPlotR)
 
 # install.packages('devtools')
 #devtools::install_github('nhs-r-community/NHSRtheme')
@@ -915,6 +914,37 @@ NEY TO ADD IN
 
 # Movement or Flow
 
-## Sankey Diagram
+## Sankey Diagram {.tabset .tabset-fade}
 
-NEY TO ADD IN
+### ggplot
+### plotly 
+
+
+
+```{r, warning = FALSE}
+
+Sankey_data<- NHSRdatasets::LOS_model %>%   
+  group_by(Organisation,Age) %>% 
+  summarise(Attends= sum(LOS)) 
+
+Sankey_data<- filter ( Sankey_data, Age >90) %>% 
+  arrange(Organisation, Age)
+##The first step is to designate nodes this just writes a list of all the Different 'Source' and 'Target' Nodes
+
+nodes <- data.frame(
+  name=c(as.character(Sankey_data$Organisation), 
+         as.character(Sankey_data$Age)) %>% unique()
+)
+
+# With networkD3,  you need to provide the details of the connection between 'nodes' these must be provided using an 'id'
+##, not using real name like in the links dataframe.. So we need to reformat it.
+Sankey_data$IDsource <- match(Sankey_data$Organisation, nodes$name)-1 
+Sankey_data$IDtarget <- match(Sankey_data$Age, nodes$name)-1
+Sankey_data<-Sankey_data %>% arrange(IDsource,IDtarget)
+
+##Make the sankey network , Iterations=0  means that the the data is displayed according to how it is sorted in the initial df. starting owith the source node 
+
+networkD3::sankeyNetwork(Links = as.data.frame.matrix(Sankey_data), Nodes = nodes,
+                         Source = "IDsource", Target = "IDtarget",
+                         Value =  "Attends", NodeID = "name", sinksRight = TRUE, fontSize = 18,iterations =0)
+```
