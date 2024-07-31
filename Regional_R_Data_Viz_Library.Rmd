@@ -174,6 +174,82 @@ ggplot(multiple_line_df,
 
 ```
 
+<<<<<<< Updated upstream
+=======
+### Plotly
+
+```{r , warning = FALSE}
+#Filter initial dataset
+multiple_line_rxq <- Attends %>%
+  filter(org_code == "RXQ") %>%
+  rename(attendrxq=attendances)
+
+multiple_line_rth <- Attends %>%
+  filter(org_code=="RTH") %>%
+  rename(attend_rth=attendances) 
+
+line_rth = subset(multiple_line_rth, select = -c(admissions, org_code))
+
+line_rxq = subset(multiple_line_rxq, select = -c(admissions, org_code))
+
+multiple_line_data <-
+  merge(line_rth, line_rxq)
+
+
+p<- plot_ly(multiple_line_data, x = ~period, y = ~multiple_line_data$attend_rth, name = 'RTH', type = 'scatter', mode = 'lines',  ##Plot the first line as dots
+        line = list(color = 'rgb(118, 134)', width = 3, dash = 'dot'))  %>% 
+  
+  add_trace(y = ~multiple_line_data$attendrxq, name = 'RXQ', line = list(color = 'blue', width = 3, dash = 'solid'))%>%  ##Plot a second line in NHS blue
+  
+  layout(title = 'Time Series Line Chart',                 ##set titles and axis labels
+         xaxis = list (title = "Year"),
+         yaxis = list (title = "Attendances")
+         ) %>%  
+  
+  config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d", "select2d", "lasso2d", "toImage",   ##remove any unnecessary functions of plotly chart
+                                    "pan2d", "autoScale2d", "resetScale2d", "zoom2d"))
+
+p
+
+```
+
+
+## SPC Charts
+
+For more info check:- https://github.com/nhs-r-community/NHSRplotthedots
+
+### ggplot
+```{r, warning = FALSE}
+
+library(NHSRplotthedots)
+library(NHSRdatasets)
+library(tidyverse)
+
+sub_set <- ae_attendances %>%
+  filter(org_code == "RQM", type == 1, period < as.Date("2018-04-01"))
+
+sub_set %>%
+  ptd_spc(value_field = breaches, date_field = period, improvement_direction = "decrease")
+
+```
+
+
+
+### Plotly
+```{r, warning = FALSE}
+
+library(NHSRplotthedots)
+library(NHSRdatasets)
+library(tidyverse)
+
+sub_set <- ae_attendances %>%
+  filter(org_code == "RQM", type == 1, period < as.Date("2018-04-01"))
+
+sub_set %>%
+  ptd_spc(value_field = breaches, date_field = period, improvement_direction = "decrease")
+
+```
+>>>>>>> Stashed changes
 # Comparisons
 
 ## Simple bar chart
