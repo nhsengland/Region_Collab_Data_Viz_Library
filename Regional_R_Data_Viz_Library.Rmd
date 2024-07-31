@@ -543,11 +543,13 @@ rm(AttendsAll)
 
 ### ggplot
 
-### Plotly
-
 ```{r, warning = FALSE}
 
-plot_ly(Attends, x = ~attendances, y = ~admissions, type = 'scatter', mode = 'markers', color = ~org_code)  %>% 
+plot_ly(Attends, x = ~attendances, y = ~admissions, type = 'scatter', mode = 'markers', color = ~org_code,
+        hoverinfo = "text", text = ~ paste("Trust:", org_code, "</br></br>",
+                                           "Attends:", attendances, "</br>",
+                                           "Admits:", admissions, "</br>",
+                                           "Date:", period) )  %>% 
   layout(title = 'Scatter plot',                           ##set titles and axis labels
          xaxis = list(title = "Attendances"),
          yaxis = list (title = "Admissions"),
