@@ -1185,7 +1185,7 @@ sankey <- networkD3::sankeyNetwork(Links = as.data.frame.matrix(Sankey_data), No
                          Source = "IDsource", Target = "IDtarget",
                          Value =  "Attends", NodeID = "name", sinksRight = TRUE, fontSize = 18,iterations =0)
 
-sankey <- htmlwidgets::prependContent(sankey, htmltools::tags$h1("Attends by Age"))
+sankey <- htmlwidgets::prependContent(sankey, htmltools::tags$h4("Attends by Age"))
 
 sankey
 
