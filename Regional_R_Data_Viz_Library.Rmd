@@ -41,6 +41,8 @@ remotes::install_github("rOpenSci/fingertipsR",
                         build_vignettes = TRUE,
                         dependencies = "suggests",
                         build = F)
+devtools::install_github("ricardo-bion/ggradar")
+#https://github.com/ricardo-bion/ggradar
 ```
 
 # Load sample data
@@ -423,11 +425,26 @@ NEY TO ADD IN
 
 ## Radar chart
 
-Insert here
+```{r , warning = FALSE, eval=FALSE}
+# Create Example dataset
+data <- tibble::tribble(
+  ~group, ~Trauma_and_Orthopaedics, ~General_Surgery, ~Gynaecology, ~Ophthalmology, ~Dermatology,
+  "Trust 1", 0.8, 0.9, 0.7, 0.6, 0.9,
+  "Trust 2", 0.6, 0.7, 0.8, 0.7, 0.6,
+  "Trust 3", 0.7, 0.8, 0.9, 0.8, 0.7
+)
 
-## Radial chart
-
-Insert here
+# Create the radar chart
+ggradar(data, 
+        values.radar = c("0%", "50%", "100%"), #Sets labels for min, min & max grid lines
+        grid.min = 0, grid.mid = 0.5, grid.max = 1, #Defines the values for the grid lines
+        group.line.width = 2, #Changes the line width of plotted line
+        group.point.size = 3, #Changes the point size of plotted line
+        group.colours = c("#00AFBB", "#E7B800", "#FC4E07"), #Colour for plotted lines based on group
+        background.circle.colour = "white", #Plot background colour
+        gridline.mid.colour = "grey", #Colour of gridlines
+        legend.position = "bottom") #Position can be 
+```
 
 ## Radial Column chart {.tabset .tabset-fade}
 
@@ -521,15 +538,39 @@ g + geom_boxplot(varwidth=T, fill="light blue") +
 
 ## Bullet chart
 
-Insert here
+```{r , warning = FALSE}
 
-## Candlestick chart
+#Create a sample dataset - replace with your own
+name = c("Trust A","Trust B","Trust C","Trust D","Trust E","Trust F","Trust G","Trust H","Trust I","Trust J")
+count= c(89,85,76,64,50,45,29,20,10,5)
 
-Insert here
+#Create a dataframe using sample data. Convert name to factor.
+data = data.frame(name, count, stringsAsFactors = TRUE)
 
-## Error bars chart
+#Sets the coloured background
+bullet_base <- data.frame(rank = c("Poor", "Ok", "Good", "Excellent"),
+                          value = c(25, 25, 25, 25))
+bullet_base_rep <- 
+  do.call("rbind", replicate(nrow(data), bullet_base, simplify = FALSE)) %>%
+  mutate(name = sort(rep(data$name, 4) ))
 
-Insert here
+#head(bullet_base_rep, 10)
+
+#Colour the background bars
+bullet_colors <- c("#e44727", "#e4a727", "#61AB40", "#318100")
+names(bullet_colors) <- c("Poor", "Ok", "Good", "Excellent")
+
+#Create plot
+ggplot() +
+  geom_bar(data = bullet_base_rep, 
+           aes(x = name, y = value, fill = rank), stat = "identity",
+           position = "stack") +
+  geom_bar(data = data, 
+           aes(x = name, y = count), fill = "black", width = .2,
+           stat = "identity") +
+  scale_fill_manual(values = bullet_colors) +
+  coord_flip(expand = FALSE)
+```
 
 ## Funnel Plot
 
@@ -560,21 +601,42 @@ funnel_plot(.data = MyAttends,
 ```       
 
 
-NEY TO ADD IN
+## Gantt chart {.tabset .tabset-fade}
 
-## Gantt chart
+### ggplot
 
-Insert here
+```{r , warning = FALSE}
 
-## Kagi chart
+# Load the dataset
+df <- read.csv("https://cdn.rawgit.com/plotly/datasets/master/GanttChart-updated.csv", 
+               stringsAsFactors = FALSE)
 
-Insert here
+# Define the start date of each task & convert to date
+df$Start <- as.Date(df$Start, format = "%m/%d/%Y")
+# Define the end of the task by adding the duration to the start date
+df$End <- df$Start + df$Duration
 
-## Span chart
+# Prepare the data for plotting
+gantt_data <- df %>%
+  mutate(task_id = row_number()) %>%
+  select(task_id, Task, Start, End, Resource)
 
-Insert here
+# Create the Gantt chart using ggplot2
+gantt_chart <- ggplot(gantt_data, aes(x = Start, xend = End, y = reorder(Task, -task_id), yend = reorder(Task, -task_id), color = factor(Resource))) +
+  geom_segment(size = 5) +
+  labs(title = "Gantt Chart with NHS Blue Shades",
+       x = "Date",
+       y = "Task") +
+  NHSRtheme::theme_nhs() +
+  scale_color_manual(values = colorRampPalette(c("#005EB8", "#73C2FB"))(length(unique(gantt_data$Resource))))
 
-## Violin chart
+# Print the Gantt chart
+print(gantt_chart)
+```
+
+## Violin chart {.tabset .tabset-fade}
+
+### ggplot
 
 ```{r, warning = FALSE}
 
