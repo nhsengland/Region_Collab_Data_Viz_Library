@@ -136,7 +136,7 @@ NHSRtheme::get_nhs_colours()
 
 ```
 
-# Data Over Time 
+# Data Over Time
 
 ## Basic line chart {.tabset .tabset-fade}
 
@@ -166,7 +166,9 @@ ggplot(line_df, aes(x = period, y = attendances)) +
 line_df <- Attends %>%
   filter(org_code=="RXQ")
   
+
 line_df <- line_df[order(line_df$period),] #Order the data frame by the date in ascending order - required for the chart to plot properly
+line_df <- line_df[order(line_df$period),] # Order the data frame by the period field in ascending order - required for the plotly chart to plot properly
 
 # Plotly Chart
 plot_ly(line_df, x = ~period, y = ~attendances, type = 'scatter', mode = 'lines',  ##Plot the first line as dots in NHS Grey
@@ -178,6 +180,12 @@ plot_ly(line_df, x = ~period, y = ~attendances, type = 'scatter', mode = 'lines'
   
   config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d", "select2d", "lasso2d", "toImage",   ##remove any unnecessary functions of plotly chart
                                     "pan2d", "autoScale2d", "resetScale2d", "zoom2d"))
+
+         yaxis = list (title ="Attendances", range = c(0, max(line_df$attendances) * 1.1)) %>% # In line with GG Plot version, set the y axis range from 0 to slightly higher than the max value
+  
+  config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d", "select2d", "lasso2d", "toImage",   ##remove any unnecessary functions of plotly chart
+                                    "pan2d", "autoScale2d", "resetScale2d", "zoom2d"))
+
 ```
 
 ## Multiple line chart {.tabset .tabset-fade}
@@ -226,7 +234,9 @@ line_rxq = subset(multiple_line_rxq, select = -c(admissions, org_code))
 multiple_line_data <-
   merge(line_rth, line_rxq)
 
-plot_ly(multiple_line_data, x = ~period, y = ~multiple_line_data$attend_rth, name = 'RTH', type = 'scatter', mode = 'lines',  ##Plot the first line as dots
+
+plot_ly(multiple_line_data, x = ~period, y = ~multiple_line_data$attend_rth, name = 'RTH', type = 'scatter', mode = 'lines',  
+
         line = list(color = 'rgb(118, 134)', width = 3, dash = 'dot'))  %>% 
   
   add_trace(y = ~multiple_line_data$attendrxq, name = 'RXQ', line = list(color = 'blue', width = 3, dash = 'solid'))%>%  ##Plot a second line in NHS blue
@@ -238,12 +248,44 @@ plot_ly(multiple_line_data, x = ~period, y = ~multiple_line_data$attend_rth, nam
   
   config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d", "select2d", "lasso2d", "toImage",   ##remove any unnecessary functions of plotly chart
                                     "pan2d", "autoScale2d", "resetScale2d", "zoom2d"))
+
 ```
 
 ## SPC Charts
 
-NEY TO ADD IN
+For more info check:- https://github.com/nhs-r-community/NHSRplotthedots
 
+### ggplot
+```{r, warning = FALSE}
+
+library(NHSRplotthedots)
+library(NHSRdatasets)
+library(tidyverse)
+
+sub_set <- ae_attendances %>%
+  filter(org_code == "RQM", type == 1, period < as.Date("2018-04-01"))
+
+sub_set %>%
+  ptd_spc(value_field = breaches, date_field = period, improvement_direction = "decrease")
+
+```
+
+
+
+### Plotly
+```{r, warning = FALSE}
+
+library(NHSRplotthedots)
+library(NHSRdatasets)
+library(tidyverse)
+
+sub_set <- ae_attendances %>%
+  filter(org_code == "RQM", type == 1, period < as.Date("2018-04-01"))
+
+sub_set %>%
+  ptd_spc(value_field = breaches, date_field = period, improvement_direction = "decrease")
+
+```
 
 # Comparisons
 
@@ -289,9 +331,6 @@ bar + geom_text(aes(label = scales::comma(attendances)), vjust =2, color= "White
 ### Plotly
 ```{r , warning = FALSE}
                               
-#-----------------------------------
-#Perform any data manipulation needed
-
 ##Filter the data to select just the most recent date
 simple_bar_data <- Attends %>% filter(period == "2019-03-01")   
 
@@ -338,8 +377,6 @@ config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d", "select2d", "lasso2d"
 simple_bar_blue
 
 ```
-
-
 
 ## Grouped bar chart {.tabset .tabset-fade}
 
@@ -469,7 +506,6 @@ plot_ly(t1, x = ~org_code, y = ~`1`, type = "bar", marker = list(color = '#00308
 rm(AttendsAll)
 ```
 
-
 ## Percent stacked bar chart {.tabset .tabset-fade}
 
 ### ggplot
@@ -496,7 +532,9 @@ rm(AttendsAll)
 ### Plotly
 
 ```{r , warning = FALSE}
+
 AttendsAll <- NHSRdatasets::ae_attendances %>%
+
   filter(
     org_code == "RXQ" | org_code == "RTH" | org_code == "RHW" |
       org_code == "RTK" | org_code == "RA2"
@@ -508,10 +546,12 @@ AttendsAll <- NHSRdatasets::ae_attendances %>%
          attendances)
 
 #Remove orgs that still appear in chart despite being filtered out!
+
 AttendsAll$org_code <- as.character(AttendsAll$org_code)
 
 #Restructure data so it works for stacked bar chart
-Attends_wide <-AttendsAll |> 
+Attends_wide <-Attends |> 
+
   pivot_wider(names_from = type, values_from = attendances, values_fill = 0)
 
 #Create copy with values as percent for charts
@@ -536,6 +576,7 @@ plot_ly(Attends_wide_per, x = ~org_code, y = ~`1`, type = "bar", marker = list(c
   config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d", "select2d", "lasso2d", "toImage",   ##remove any unnecessary functions of plotly chart
                                     "pan2d", "autoScale2d", "resetScale2d", "zoom2d"))
 
+
 rm(AttendsAll)
 ```
 
@@ -555,12 +596,12 @@ plot_ly(Attends, x = ~attendances, y = ~admissions, type = 'scatter', mode = 'ma
          yaxis = list (title = "Admissions"),
          legend = list()) %>% 
   config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d", "select2d", "lasso2d", "toImage",   
-                                    "pan2d", "autoScale2d", "resetScale2d", "zoom2d"))  ##remove any unnecessary functions of plotly chart
+                                    "pan2d", "autoScale2d", "resetScale2d", "zoom2d"))  ##remove any unnecessary functions of 
 ```
 
 ## Bubble chart {.tabset .tabset-fade}
 
-### ggplot
+### Plotly
 
 ```{r , warning = FALSE}
 
@@ -703,12 +744,11 @@ plot_ly(bubble_df, x = ~perc_admissions_attendances, y = ~perc_breaches_attendan
 rm(AttendsBub)
 ```
 
-
 ## Population Pyramid chart {.tabset .tabset-fade}
 
 ### ggplot
 
-```{r , warning = FALSE, eval = FALSE}
+```{r , warning = FALSE,eval = FALSE}
 
 # Plot the population pyramid
 ggplot(population_data_filtered, aes(x = Age, y = Value, fill = Sex)) +
@@ -737,6 +777,7 @@ population_data_filtered %>%
 
 ```
 
+
 ## Radar chart
 
 ```{r , warning = FALSE, eval=FALSE}
@@ -761,8 +802,6 @@ ggradar(data,
 ```
 
 ## Radial Column chart {.tabset .tabset-fade}
-
-### ggplot
 
 ```{r , warning = FALSE}
 
@@ -849,6 +888,7 @@ plot_ly(summary_data_pl, color=I("blue")) %>%
     )) # ,"resetScale2d", "hoverClosestCartesian"))
 
 ```
+
 ## Stacked area chart {.tabset .tabset-fade}
 
 ### ggplot
@@ -856,10 +896,12 @@ plot_ly(summary_data_pl, color=I("blue")) %>%
 ```{r , warning = FALSE}
 
 AttendsSAC <- NHSRdatasets::ae_attendances %>%
+
   filter(org_code == "RXQ"|org_code=="RTH"|org_code=="RHW"|
            org_code == "RTK"|org_code == "RA2")
 
 # Plot the stacked area chart
+
 ggplot(AttendsSAC, aes(x = period, fill = org_code)) +
   geom_area(stat = "count") +  
   NHSRtheme::scale_fill_nhs("blues")
@@ -902,11 +944,52 @@ plot_ly(data = AttendsSAC |> group_by(period, org_code) |>  summarise(count = n(
                       dtick = "M12"))
 
 rm(AttendsSAC)
+
+ggplot(Attends, aes(x = period, fill = org_code)) +
+  geom_area(stat = "count") +  
+  NHSRtheme::scale_fill_nhs("blues")
+
+
 ```
 
 ### Plotly
 
-NEY TO ADD IN
+```{r , warning = FALSE, message = FALSE}
+
+# Plot the stacked area chart 
+
+blues <- c("#00A9CE", "#41B6E6", "#0072CE",   "#005EB8","#003087" )
+
+Attends <- NHSRdatasets::ae_attendances %>%
+  filter(org_code == "RXQ"|org_code=="RTH"|org_code=="RHW"|
+           org_code == "RTK"|org_code == "RA2") |>
+  # sort by unique code in reverse so the chart is stacked in opposite alphabet order
+  mutate(org_code = factor(org_code, levels = rev(sort(unique(org_code)))))
+
+plot_ly(data = Attends |> group_by(period, org_code) |>  summarise(count = n()) |> ungroup(),
+        x = ~period,
+        y = ~count,
+        color = ~org_code,
+        colors = blues,
+        type = 'scatter',
+        mode = 'none',
+        stackgroup = 'one',
+        line = list(colors = blues),
+        stackgroup = 'one') |>
+# solid fill colours to replicate the ggplot style
+  style(traces = 1, fillcolor = "#00A9CE") |>
+  style(traces = 2, fillcolor = "#41B6E6") |>
+  style(traces = 3, fillcolor = "#0072CE") |>
+  style(traces = 4, fillcolor = "#005EB8") |>
+  style(traces = 5, fillcolor = "#003087") |>
+  layout(legend = list(title = list(text = "org_code")),
+         xaxis = list(tickformat = "%Y",
+                      dtick = "M12"))
+
+
+```
+
+
 
 # Creating multiple charts for the same measure
 
@@ -1002,7 +1085,6 @@ funnel_plot(.data = MyAttends,
 
 rm(MyAttends)
 ```       
-
 
 ## Gantt chart {.tabset .tabset-fade}
 
@@ -1143,6 +1225,7 @@ xaxis = list(title = "4 hour performance", ticksuffix="%"), margin = list(l = 65
                # ay = -30,
                font = list(color = "555555#")
             )))
+
 dumbellplotly
 
 rm(dumbbell_df)
@@ -1154,9 +1237,8 @@ rm(dumbellplotly)
 ## Sankey Diagram {.tabset .tabset-fade}
 
 ### ggplot
+
 ### plotly 
-
-
 
 ```{r, warning = FALSE}
 
@@ -1181,6 +1263,7 @@ Sankey_data<-Sankey_data %>% arrange(IDsource,IDtarget)
 
 ##Make the sankey network , Iterations=0  means that the the data is displayed according to how it is sorted in the initial df. starting owith the source node 
 
+
 sankey <- networkD3::sankeyNetwork(Links = as.data.frame.matrix(Sankey_data), Nodes = nodes,
                          Source = "IDsource", Target = "IDtarget",
                          Value =  "Attends", NodeID = "name", sinksRight = TRUE, fontSize = 18,iterations =0)
@@ -1190,3 +1273,4 @@ sankey <- htmlwidgets::prependContent(sankey, htmltools::tags$h4("Attends by Age
 sankey
 
 ```
+
