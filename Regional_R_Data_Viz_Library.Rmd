@@ -1225,6 +1225,7 @@ xaxis = list(title = "4 hour performance", ticksuffix="%"), margin = list(l = 65
                # ay = -30,
                font = list(color = "555555#")
             )))
+
 dumbellplotly
 
 rm(dumbbell_df)
