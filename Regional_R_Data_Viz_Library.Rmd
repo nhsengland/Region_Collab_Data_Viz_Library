@@ -32,7 +32,7 @@ if (!require("pacman")) install.packages("pacman"); library(pacman)
 
 pacman::p_load(Rcpp, tidyverse,dplyr,tidyr,
                ggplot2,ggthemes,ggtext,scales,
-               png,ggalt,NHSRdatasets,onsr,shinycssloaders, plotly, FunnelPlotR)
+               png,ggalt,NHSRdatasets,onsr,shinycssloaders, plotly, networkD3, FunnelPlotR)
 
 # install.packages('devtools')
 #devtools::install_github('nhs-r-community/NHSRtheme')
@@ -41,6 +41,8 @@ remotes::install_github("rOpenSci/fingertipsR",
                         build_vignettes = TRUE,
                         dependencies = "suggests",
                         build = F)
+devtools::install_github("ricardo-bion/ggradar")
+#https://github.com/ricardo-bion/ggradar
 ```
 
 # Load sample data
@@ -101,6 +103,9 @@ population_data <- fingertips_data(IndicatorID = indicator_id,AreaTypeID = "15")
 # Filter data to include only relevant columns and non-NA values
 population_data_filtered <- population_data %>%
   filter(!is.na(Age), !is.na(Value)) %>%
+
+  filter(Timeperiod == "2022")  %>%  # Alistair's addtion
+
   select(AreaName, Sex, Age, Value)
 
 # Adjust the values for plotting (male values negative for pyramid structure)
@@ -131,7 +136,7 @@ NHSRtheme::get_nhs_colours()
 
 ```
 
-# Data Over Time
+# Data Over Time 
 
 ## Basic line chart {.tabset .tabset-fade}
 
@@ -156,7 +161,24 @@ ggplot(line_df, aes(x = period, y = attendances)) +
 
 ### Plotly
 
-NEY TO ADD IN
+```{r , warning = FALSE}
+#Filter initial dataset
+line_df <- Attends %>%
+  filter(org_code=="RXQ")
+  
+line_df <- line_df[order(line_df$period),] #Order the data frame by the date in ascending order - required for the chart to plot properly
+
+# Plotly Chart
+plot_ly(line_df, x = ~period, y = ~attendances, type = 'scatter', mode = 'lines',  ##Plot the first line as dots in NHS Grey
+            line = list(color = "#005EB8", width = 3, dash = 'line'))  %>% 
+  
+   layout(title = "Type 1 attendances - Bucks Healthcare", ##set titles and axis labels
+         xaxis = list (title = "Month"),
+         yaxis = list (title ="Attendances", range = c(0, max(line_df$attendances) * 1.1))) %>%  #Align the y axis scales with the ggplot chart
+  
+  config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d", "select2d", "lasso2d", "toImage",   ##remove any unnecessary functions of plotly chart
+                                    "pan2d", "autoScale2d", "resetScale2d", "zoom2d"))
+```
 
 ## Multiple line chart {.tabset .tabset-fade}
 
@@ -187,7 +209,36 @@ ggplot(multiple_line_df,
 
 ### Plotly
 
-NEY TO ADD IN
+```{r , warning = FALSE}
+#Filter initial dataset
+multiple_line_rxq <- Attends %>%
+  filter(org_code == "RXQ") %>%
+  rename(attendrxq=attendances)
+
+multiple_line_rth <- Attends %>%
+  filter(org_code=="RTH") %>%
+  rename(attend_rth=attendances) 
+
+line_rth = subset(multiple_line_rth, select = -c(admissions, org_code))
+
+line_rxq = subset(multiple_line_rxq, select = -c(admissions, org_code))
+
+multiple_line_data <-
+  merge(line_rth, line_rxq)
+
+plot_ly(multiple_line_data, x = ~period, y = ~multiple_line_data$attend_rth, name = 'RTH', type = 'scatter', mode = 'lines',  ##Plot the first line as dots
+        line = list(color = 'rgb(118, 134)', width = 3, dash = 'dot'))  %>% 
+  
+  add_trace(y = ~multiple_line_data$attendrxq, name = 'RXQ', line = list(color = 'blue', width = 3, dash = 'solid'))%>%  ##Plot a second line in NHS blue
+  
+  layout(title = 'Time Series Line Chart',                 ##set titles and axis labels
+         xaxis = list (title = "Year"),
+         yaxis = list (title = "Attendances")
+         ) %>%  
+  
+  config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d", "select2d", "lasso2d", "toImage",   ##remove any unnecessary functions of plotly chart
+                                    "pan2d", "autoScale2d", "resetScale2d", "zoom2d"))
+```
 
 ## SPC Charts
 
@@ -287,7 +338,6 @@ simple_bar_blue
 
 ```
 
-
 ## Grouped bar chart {.tabset .tabset-fade}
 
 ### ggplot
@@ -376,11 +426,45 @@ ggplot(AttendsAll, aes(fill = type, y = attendances, x = org_code)) +
        x = "Provider Code") +
   theme(legend.title = element_blank())
 
+rm(AttendsAll)
 ```
 
 ### Plotly
 
-NEY TO ADD IN
+```{r , warning = FALSE, message = FALSE}
+AttendsAll <- NHSRdatasets::ae_attendances %>%
+  filter(
+    org_code == "RXQ" | org_code == "RTH" | org_code == "RHW" |
+      org_code == "RTK" | org_code == "RA2"
+  ) %>%
+  filter(period == '2017-03-01')
+
+#Perform any data manipulation needed
+AttendsAll$org_code <- as.character(AttendsAll$org_code)
+t1 <- AttendsAll %>%
+  filter(
+    org_code == "RXQ" | org_code == "RTH" | org_code == "RHW" |
+      org_code == "RTK" | org_code == "RA2"
+  ) %>%
+  filter(period == '2017-03-01')
+t1<- t1 %>% pivot_wider(names_from = type, values_from = attendances) 
+#--------------------------------
+#Plot the Chart
+plot_ly(t1, x = ~org_code, y = ~`1`, type = "bar", marker = list(color = '#003087'), name = 'Type 1') %>%  ##Set bar colours
+  add_trace(t1, x = ~org_code, y = ~`2`, marker = list(color = '#0072CE'), name = 'Type 2')%>% ## add next stack
+  add_trace(t1, x = ~org_code, y = ~other, marker = list(color = '#41B6E6'), name = 'Other')%>% ## add next stack
+                          
+  layout(title = 'A&E Attendances by department type - March 2017',                           ##set titles and axis labels
+         xaxis = list(title = "Organisation"),
+         yaxis = list(title = "Attendances"),
+         legend = list(),
+         barmode = 'stack') %>% 
+  
+  config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d", "select2d", "lasso2d", "toImage",   ##remove any unnecessary functions of plotly chart
+                                    "pan2d", "autoScale2d", "resetScale2d", "zoom2d"))
+
+rm(AttendsAll)
+```
 
 ## Percent stacked bar chart {.tabset .tabset-fade}
 
@@ -402,12 +486,13 @@ ggplot(AttendsAll, aes(fill = type, y = attendances, x = org_code)) +
        x = "Provider Code") +
   theme(legend.title = element_blank())
 
+rm(AttendsAll)
 ```
 
 ### Plotly
 
 ```{r , warning = FALSE}
-Attends <- NHSRdatasets::ae_attendances %>%
+AttendsAll <- NHSRdatasets::ae_attendances %>%
   filter(
     org_code == "RXQ" | org_code == "RTH" | org_code == "RHW" |
       org_code == "RTK" | org_code == "RA2"
@@ -419,10 +504,10 @@ Attends <- NHSRdatasets::ae_attendances %>%
          attendances)
 
 #Remove orgs that still appear in chart despite being filtered out!
-Attends$org_code <- as.character(Attends$org_code)
+AttendsAll$org_code <- as.character(AttendsAll$org_code)
 
 #Restructure data so it works for stacked bar chart
-Attends_wide <-Attends |> 
+Attends_wide <-AttendsAll |> 
   pivot_wider(names_from = type, values_from = attendances, values_fill = 0)
 
 #Create copy with values as percent for charts
@@ -447,36 +532,56 @@ plot_ly(Attends_wide_per, x = ~org_code, y = ~`1`, type = "bar", marker = list(c
   config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d", "select2d", "lasso2d", "toImage",   ##remove any unnecessary functions of plotly chart
                                     "pan2d", "autoScale2d", "resetScale2d", "zoom2d"))
 
- 
+rm(AttendsAll)
 ```
+
+## Scatter plot {.tabset .tabset-fade}
+
+### ggplot
+
+```{r, warning = FALSE}
+
+plot_ly(Attends, x = ~attendances, y = ~admissions, type = 'scatter', mode = 'markers', color = ~org_code,
+        hoverinfo = "text", text = ~ paste("Trust:", org_code, "</br></br>",
+                                           "Attends:", attendances, "</br>",
+                                           "Admits:", admissions, "</br>",
+                                           "Date:", period) )  %>% 
+  layout(title = 'Scatter plot',                           ##set titles and axis labels
+         xaxis = list(title = "Attendances"),
+         yaxis = list (title = "Admissions"),
+         legend = list()) %>% 
+  config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d", "select2d", "lasso2d", "toImage",   
+                                    "pan2d", "autoScale2d", "resetScale2d", "zoom2d"))  ##remove any unnecessary functions of 
+```
+
 
 ## Bubble chart {.tabset .tabset-fade}
 
-### ggplot
+### Plotly
 
 ```{r , warning = FALSE}
 
 #For this example we are filtering on 5 organisations, type 1 activity & excluding column 3 from the dataframe.
-Attends <- NHSRdatasets::ae_attendances %>%
+AttendsBub <- NHSRdatasets::ae_attendances %>%
   filter(org_code == "RXQ"|org_code=="RTH"|org_code=="RHW"|
            org_code == "RTK"|org_code == "RA2")
 
   # Summarise data for type 1 attendances
-  type_1_summary <- Attends %>%
+  type_1_summary <- AttendsBub %>%
   filter(type == 1) %>%
   group_by(org_code, period) %>%
   summarise(type_1_attendances = sum(attendances, na.rm = TRUE)) %>%
   ungroup()
 
 # Summarise data for non-type 1 attendances
-type_other_summary <- Attends %>%
+type_other_summary <- AttendsBub %>%
   filter(type == 3|type== 2) %>%
   group_by(org_code, period) %>%
   summarise(type_other_attendances = sum(attendances, na.rm = TRUE)) %>%
   ungroup()
 
 # Summarise total attendances and total admissions
-total_summary <- Attends %>%
+total_summary <- AttendsBub %>%
   group_by(org_code, period) %>%
   summarise(
     total_attendances = sum(attendances, na.rm = TRUE),
@@ -520,18 +625,86 @@ ggplot(bubble_df, aes(x = perc_admissions_attendances, y = perc_breaches_attenda
   labs(title = "Bubble Chart of % 4 Hour Breaches vs % converted to admission with % Attendances Type 1 Size",
        x = "Conversion Rate", y = "% 4 Hour Breaches") +
   theme(legend.position = "right")
+
+rm(AttendsBub)
 ```
 
 ### Plotly
 
-NEY TO ADD IN
+```{r, warning = FALSE}
+
+#For this example we are filtering on 5 organisations, type 1 activity & excluding column 3 from the dataframe.
+AttendsBub <- NHSRdatasets::ae_attendances %>%
+  filter(org_code == "RXQ"|org_code=="RTH"|org_code=="RHW"|
+           org_code == "RTK"|org_code == "RA2")
+
+# Summarise data for type 1 attendances
+  type_1_summary <- AttendsBub %>%
+  filter(type == 1) %>%
+  group_by(org_code, period) %>%
+  summarise(type_1_attendances = sum(attendances, na.rm = TRUE)) %>%
+  ungroup()
+
+# Summarise data for non-type 1 attendances
+type_other_summary <- AttendsBub %>%
+  filter(type == 3|type== 2) %>%
+  group_by(org_code, period) %>%
+  summarise(type_other_attendances = sum(attendances, na.rm = TRUE)) %>%
+  ungroup()
+
+# Summarise total attendances and total admissions
+total_summary <- AttendsBub %>%
+  group_by(org_code, period) %>%
+  summarise(
+    total_attendances = sum(attendances, na.rm = TRUE),
+    total_breaches = sum(breaches, na.rm = TRUE),
+    total_admissions = sum(admissions, na.rm = TRUE)
+  ) %>%
+  ungroup()
+
+# Merge the summaries into a single data frame
+final_summary <- total_summary %>%
+  left_join(type_1_summary, by = c("org_code", "period")) %>%
+  left_join(type_other_summary, by = c("org_code", "period"))
+
+# Replace NA values with 0 for type_1_attendances and type_3_attendances
+final_summary <- final_summary %>%
+  mutate(
+    type_1_attendances = replace_na(type_1_attendances, 0),
+    type_other_attendances = replace_na(type_other_attendances, 0)
+  )
+
+# Add percentage columns
+final_summary <- final_summary %>%
+  mutate(
+    perc_admissions_attendances = (total_admissions / total_attendances) * 100,
+    perc_type1_attendances_total = (type_1_attendances / total_attendances) * 100,
+    perc_breaches_attendances = (total_breaches / total_attendances) * 100
+  )
+
+# Filter initial dataset
+bubble_df <- final_summary
+
+# Calculate size for bubble chart (proportional to type 1 attendances)
+bubble_df <- bubble_df %>%
+  mutate(size = perc_type1_attendances_total / max(perc_type1_attendances_total) * 100)
+
+
+# Create bubble chart
+plot_ly(bubble_df, x = ~perc_admissions_attendances, y = ~perc_breaches_attendances, text = "Proportion of type 1", type = 'scatter', mode = 'markers', color = ~size, colors = 'Blues', size = ~size, sizes = c(5,20),
+        marker = list(sizemode = 'diameter', opacity = 0.7)) %>% 
+  layout(title = 'Bubble Chart of % 4 Hour Breaches vs \n % converted to admission with % Attendances Type 1 Size',
+         xaxis = list(showgrid = FALSE, title = "Conversion Rate"),
+         yaxis = list(showgrid = FALSE, title = "% 4 Hour Breaches"))
+
+rm(AttendsBub)
+```
 
 ## Population Pyramid chart {.tabset .tabset-fade}
 
 ### ggplot
 
 ```{r , warning = FALSE,eval = FALSE}
-
 # Plot the population pyramid
 ggplot(population_data_filtered, aes(x = Age, y = Value, fill = Sex)) +
   geom_bar(stat = "identity", position = "identity") +
@@ -546,19 +719,44 @@ ggplot(population_data_filtered, aes(x = Age, y = Value, fill = Sex)) +
 
 ### Plotly
 
-NEY TO ADD IN
+```{r , warning = FALSE, eval = FALSE}
+
+population_data_filtered %>% 
+  # mutate(population = ifelse(test = gender == "M", yes = -population, no = population)) %>%
+  mutate(abs_pop = abs(Value)) %>%
+  plot_ly(x= ~Value, y=~Age, color=~Sex) %>% 
+  add_bars(orientation = 'h', hoverinfo = 'text', text = ~abs_pop) %>%
+  layout(bargap = 0.1, barmode = 'overlay',
+         xaxis = list(tickmode = 'array', tickvals = c(-2000000, -1000000, 0, 1000000, 2000000),
+                      ticktext = c('2M', '1M', '0', '1M', '2M')))
+
+```
+
 
 ## Radar chart
 
-Insert here
+```{r , warning = FALSE, eval=FALSE}
+# Create Example dataset
+data <- tibble::tribble(
+  ~group, ~Trauma_and_Orthopaedics, ~General_Surgery, ~Gynaecology, ~Ophthalmology, ~Dermatology,
+  "Trust 1", 0.8, 0.9, 0.7, 0.6, 0.9,
+  "Trust 2", 0.6, 0.7, 0.8, 0.7, 0.6,
+  "Trust 3", 0.7, 0.8, 0.9, 0.8, 0.7
+)
 
-## Radial chart
-
-Insert here
+# Create the radar chart
+ggradar(data, 
+        values.radar = c("0%", "50%", "100%"), #Sets labels for min, min & max grid lines
+        grid.min = 0, grid.mid = 0.5, grid.max = 1, #Defines the values for the grid lines
+        group.line.width = 2, #Changes the line width of plotted line
+        group.point.size = 3, #Changes the point size of plotted line
+        group.colours = c("#00AFBB", "#E7B800", "#FC4E07"), #Colour for plotted lines based on group
+        background.circle.colour = "white", #Plot background colour
+        gridline.mid.colour = "grey", #Colour of gridlines
+        legend.position = "bottom") #Position can be 
+```
 
 ## Radial Column chart {.tabset .tabset-fade}
-
-### ggplot
 
 ```{r , warning = FALSE}
 
@@ -574,7 +772,34 @@ ggplot(Attends, aes(x = reorder(org_code, -attendances), y = attendances)) +
 
 ### Plotly
 
-NEY TO ADD IN
+```{r , warning = FALSE}
+data <- Attends %>% group_by(org_code) %>%
+  summarise(sum_attends = sum(attendances))
+data$angle = c(0, 72, 144, 216, 288)
+
+plot_ly(
+  type = 'barpolar',
+  r = data$sum_attends,
+  theta = data$angle
+  ) %>%
+  layout(
+    title = 'Attendances per Trust',
+    polar = list(
+      radialaxis = list(
+        visible = TRUE,
+        range = c(0, 500000)
+      ),
+      angularaxis = list(
+        tickmode = 'array',
+        tickvals = data$angle,
+        ticktext = data$org_code,
+        ticklen = 15  # This indirectly adjusts spacing by lengthening tick marks
+      ),
+      bargap = 0.5,  # This adjusts the gap between bars
+      bargroupgap = 0.5  # This adjusts the gap between bar groups
+    )
+  )
+```
 
 ## Span chart {.tabset .tabset-fade}
 
@@ -598,7 +823,26 @@ ggplot(summary_data, aes(y = org_code)) +
 
 ### Plotly
 
-NEY TO ADD IN
+```{r , warning = FALSE}
+summary_data_pl <- Attends %>%
+  group_by(org_code) %>%
+  summarise(min_attendance = min(attendances),
+            max_attendance = max(attendances))
+
+plot_ly(summary_data_pl, color=I("blue")) %>%
+  add_segments(x = ~min_attendance, xend = ~max_attendance, y = ~org_code, yend = ~org_code) %>%
+      layout(
+      title = "Range of Type 1 Attendances by Trust between 2019 and 2023", 
+      xaxis = list(title = "Number of Attendances"),
+      yaxis = list(title = "Organisation Code"), #, categoryorder = "category descending"),
+      margin = list(l = 65)
+    ) %>%
+    config(modeBarButtonsToRemove = c(
+      "zoomIn2d", "zoomOut2d", "select2d", "lasso2d", # "toImage",
+      "pan2d", "autoScale2d", "zoom2d"
+    )) # ,"resetScale2d", "hoverClosestCartesian"))
+
+```
 
 ## Stacked area chart {.tabset .tabset-fade}
 
@@ -606,15 +850,16 @@ NEY TO ADD IN
 
 ```{r , warning = FALSE}
 
-Attends <- NHSRdatasets::ae_attendances %>%
+AttendsSAC <- NHSRdatasets::ae_attendances %>%
   filter(org_code == "RXQ"|org_code=="RTH"|org_code=="RHW"|
            org_code == "RTK"|org_code == "RA2")
 
 # Plot the stacked area chart
-ggplot(Attends, aes(x = period, fill = org_code)) +
+ggplot(AttendsSAC, aes(x = period, fill = org_code)) +
   geom_area(stat = "count") +  
   NHSRtheme::scale_fill_nhs("blues")
 
+rm(AttendsSAC)
 ```
 
 ### Plotly
@@ -625,19 +870,19 @@ ggplot(Attends, aes(x = period, fill = org_code)) +
 
 blues <- c("#00A9CE", "#41B6E6", "#0072CE",   "#005EB8","#003087" )
 
-Attends <- NHSRdatasets::ae_attendances %>%
+AttendsSAC <- NHSRdatasets::ae_attendances %>%
   filter(org_code == "RXQ"|org_code=="RTH"|org_code=="RHW"|
            org_code == "RTK"|org_code == "RA2") |>
   # sort by unique code in reverse so the chart is stacked in opposite alphabet order
   mutate(org_code = factor(org_code, levels = rev(sort(unique(org_code)))))
 
-plot_ly(data = Attends |> group_by(period, org_code) |>  summarise(count = n()) |> ungroup(),
+plot_ly(data = AttendsSAC |> group_by(period, org_code) |>  summarise(count = n()) |> ungroup(),
         x = ~period,
         y = ~count,
         color = ~org_code,
         colors = blues,
         type = 'scatter',
-        mode = 'none',
+        mode = 'lines',
         stackgroup = 'one',
         line = list(colors = blues),
         stackgroup = 'one') |>
@@ -651,10 +896,12 @@ plot_ly(data = Attends |> group_by(period, org_code) |>  summarise(count = n()) 
          xaxis = list(tickformat = "%Y",
                       dtick = "M12"))
 
-
+rm(AttendsSAC)
 ```
 
+### Plotly
 
+NEY TO ADD IN
 
 # Creating multiple charts for the same measure
 
@@ -688,15 +935,39 @@ g + geom_boxplot(varwidth=T, fill="light blue") +
 
 ## Bullet chart
 
-Insert here
+```{r , warning = FALSE}
 
-## Candlestick chart
+#Create a sample dataset - replace with your own
+name = c("Trust A","Trust B","Trust C","Trust D","Trust E","Trust F","Trust G","Trust H","Trust I","Trust J")
+count= c(89,85,76,64,50,45,29,20,10,5)
 
-Insert here
+#Create a dataframe using sample data. Convert name to factor.
+data = data.frame(name, count, stringsAsFactors = TRUE)
 
-## Error bars chart
+#Sets the coloured background
+bullet_base <- data.frame(rank = c("Poor", "Ok", "Good", "Excellent"),
+                          value = c(25, 25, 25, 25))
+bullet_base_rep <- 
+  do.call("rbind", replicate(nrow(data), bullet_base, simplify = FALSE)) %>%
+  mutate(name = sort(rep(data$name, 4) ))
 
-Insert here
+#head(bullet_base_rep, 10)
+
+#Colour the background bars
+bullet_colors <- c("#e44727", "#e4a727", "#61AB40", "#318100")
+names(bullet_colors) <- c("Poor", "Ok", "Good", "Excellent")
+
+#Create plot
+ggplot() +
+  geom_bar(data = bullet_base_rep, 
+           aes(x = name, y = value, fill = rank), stat = "identity",
+           position = "stack") +
+  geom_bar(data = data, 
+           aes(x = name, y = count), fill = "black", width = .2,
+           stat = "identity") +
+  scale_fill_manual(values = bullet_colors) +
+  coord_flip(expand = FALSE)
+```
 
 ## Funnel Plot
 
@@ -724,21 +995,46 @@ funnel_plot(.data = MyAttends,
             y_label = "% breaches", #Specify the X Axis Label
             x_label = "No. of attendances") #Specify the Y Axis Label
 
+rm(MyAttends)
 ```       
 
-## Gantt chart
 
-Insert here
+## Gantt chart {.tabset .tabset-fade}
 
-## Kagi chart
+### ggplot
 
-Insert here
+```{r , warning = FALSE}
 
-## Span chart
+# Load the dataset
+df <- read.csv("https://cdn.rawgit.com/plotly/datasets/master/GanttChart-updated.csv", 
+               stringsAsFactors = FALSE)
 
-Insert here
+# Define the start date of each task & convert to date
+df$Start <- as.Date(df$Start, format = "%m/%d/%Y")
+# Define the end of the task by adding the duration to the start date
+df$End <- df$Start + df$Duration
 
-## Violin chart
+# Prepare the data for plotting
+gantt_data <- df %>%
+  mutate(task_id = row_number()) %>%
+  select(task_id, Task, Start, End, Resource)
+
+# Create the Gantt chart using ggplot2
+gantt_chart <- ggplot(gantt_data, aes(x = Start, xend = End, y = reorder(Task, -task_id), yend = reorder(Task, -task_id), color = factor(Resource))) +
+  geom_segment(size = 5) +
+  labs(title = "Gantt Chart with NHS Blue Shades",
+       x = "Date",
+       y = "Task") +
+  NHSRtheme::theme_nhs() +
+  scale_color_manual(values = colorRampPalette(c("#005EB8", "#73C2FB"))(length(unique(gantt_data$Resource))))
+
+# Print the Gantt chart
+print(gantt_chart)
+```
+
+## Violin chart {.tabset .tabset-fade}
+
+### ggplot
 
 ```{r, warning = FALSE}
 
@@ -783,6 +1079,7 @@ dumbell <- ggplot(dumbbell_df, aes(x = `2017`, xend = `2019`, y = reorder(org_co
  theme(plot.subtitle = element_markdown(hjust = 0, size = 12))+ theme(legend.position = "none")
 
 plot(dumbell)
+
 ```
 
 **Adding annotations**
@@ -803,10 +1100,87 @@ dumbell + geom_label(aes(x = 0.9, y = "R1K",label = "Standard"),
 
 ### Plotly
 
-NEY TO ADD IN
+```{r, warning = FALSE}
+dumbbellplotly_df <- dumbbell_df
+dumbbellplotly_df$org_code <- as.character(dumbbellplotly_df$org_code)
+dumbbellplotly_df$`2017`<- round(dumbbellplotly_df$`2017`*100,1) 
+dumbbellplotly_df$`2019`<- round(dumbbellplotly_df$`2019`*100,1)
+dumbbellplotly_df$`gap`<- round(dumbbellplotly_df$`gap`*100,1) 
+## Region chart  This sets up a blank plotly object to begin with 
+ dumbellplotly<- plot_ly(dumbbellplotly_df, color = I("gray80")) 
+## It then adds a line for each 'org_code that starts at 2017 and goes through to the 2019 number 
+ dumbellplotly <-dumbellplotly %>% add_segments(x = ~dumbbellplotly_df$`2017`, xend = ~dumbbellplotly_df$`2019`, y = ~org_code, yend = ~org_code, showlegend = FALSE)
+# It then adds a dot on the 2017 end of the line in red 
+dumbellplotly <- dumbellplotly %>% add_markers(x = ~dumbbellplotly_df$`2017`, y = ~org_code, name = "2017", color = I("#AE2573"),size = 8 )
+# It then adds a dot on the 2019 end of the line in blue 
+dumbellplotly <- dumbellplotly %>% add_markers(x = ~dumbbellplotly_df$`2019`,y = ~org_code, name = "2019", color = I("#0072CE"),size = 8 )
+#The titles are then added 
+dumbellplotly<- dumbellplotly %>% layout( title = "Performance improved for all providers",   
+xaxis = list(title = "4 hour performance", ticksuffix="%"), margin = list(l = 65),
+    shapes = list(list(type = "line",
+    x0 = 95, 
+    x1 = 95,
+    y0 = 0,
+    y1 = "RXC",
+    ref = "x",
+     yref = "y",
+    line = list(color="#333333",dash = "dash"))),
+    annotations = list(
+             list(
+               x = 95,
+               y = "RXC",
+               xref = "x",
+               yref = "y",
+               text = "Standard (95%)",
+               showarrow = TRUE,
+               arrowhead = 2,
+               # ax = 20,
+               # ay = -30,
+               font = list(color = "555555#")
+            )))
+dumbellplotly
+
+rm(dumbbell_df)
+rm(dumbellplotly)
+```
 
 # Movement or Flow
 
-## Sankey Diagram
+## Sankey Diagram {.tabset .tabset-fade}
 
-NEY TO ADD IN
+### ggplot
+
+### plotly 
+
+```{r, warning = FALSE}
+
+Sankey_data<- NHSRdatasets::LOS_model %>%   
+  group_by(Organisation,Age) %>% 
+  summarise(Attends= sum(LOS)) 
+
+Sankey_data<- filter ( Sankey_data, Age >90) %>% 
+  arrange(Organisation, Age)
+##The first step is to designate nodes this just writes a list of all the Different 'Source' and 'Target' Nodes
+
+nodes <- data.frame(
+  name=c(as.character(Sankey_data$Organisation), 
+         as.character(Sankey_data$Age)) %>% unique()
+)
+
+# With networkD3,  you need to provide the details of the connection between 'nodes' these must be provided using an 'id'
+##, not using real name like in the links dataframe.. So we need to reformat it.
+Sankey_data$IDsource <- match(Sankey_data$Organisation, nodes$name)-1 
+Sankey_data$IDtarget <- match(Sankey_data$Age, nodes$name)-1
+Sankey_data<-Sankey_data %>% arrange(IDsource,IDtarget)
+
+##Make the sankey network , Iterations=0  means that the the data is displayed according to how it is sorted in the initial df. starting owith the source node 
+
+sankey <- networkD3::sankeyNetwork(Links = as.data.frame.matrix(Sankey_data), Nodes = nodes,
+                         Source = "IDsource", Target = "IDtarget",
+                         Value =  "Attends", NodeID = "name", sinksRight = TRUE, fontSize = 18,iterations =0)
+
+sankey <- htmlwidgets::prependContent(sankey, htmltools::tags$h4("Attends by Age"))
+
+sankey
+
+```
