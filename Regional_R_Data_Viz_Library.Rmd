@@ -1263,6 +1263,7 @@ Sankey_data<-Sankey_data %>% arrange(IDsource,IDtarget)
 
 ##Make the sankey network , Iterations=0  means that the the data is displayed according to how it is sorted in the initial df. starting owith the source node 
 
+
 sankey <- networkD3::sankeyNetwork(Links = as.data.frame.matrix(Sankey_data), Nodes = nodes,
                          Source = "IDsource", Target = "IDtarget",
                          Value =  "Attends", NodeID = "name", sinksRight = TRUE, fontSize = 18,iterations =0)
@@ -1272,5 +1273,4 @@ sankey <- htmlwidgets::prependContent(sankey, htmltools::tags$h4("Attends by Age
 sankey
 
 ```
-
 
