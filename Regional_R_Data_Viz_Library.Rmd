@@ -539,7 +539,7 @@ AttendsAll <- NHSRdatasets::ae_attendances %>%
     org_code == "RXQ" | org_code == "RTH" | org_code == "RHW" |
       org_code == "RTK" | org_code == "RA2"
   ) %>%
-  filter(period == '2017-03-01') |> 
+  filter(period == '2017-03-01') %>% 
   select(period,
          org_code,
          type,
@@ -550,7 +550,7 @@ AttendsAll <- NHSRdatasets::ae_attendances %>%
 AttendsAll$org_code <- as.character(AttendsAll$org_code)
 
 #Restructure data so it works for stacked bar chart
-Attends_wide <-Attends |> 
+Attends_wide <-AttendsAll |> 
 
   pivot_wider(names_from = type, values_from = attendances, values_fill = 0)
 
