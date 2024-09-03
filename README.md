@@ -7,6 +7,8 @@
 
 This repository holds code for data visualisation within R, using a collection of published datasets that are available at different organisational and geographic breakdowns. The intention of this project is to share code across all regions and encourage increased usage of R by having a library colleagues can access.
 
+This is a regional collaboration by North East & Yorkshire Analytics, South East Data & Analytics and East of England Intelligence & Insight - NHS England, but we welcome wider input and contributions.
+
 _**Note:** Only public data is shared in this repository._
 
 ### Project Stucture
