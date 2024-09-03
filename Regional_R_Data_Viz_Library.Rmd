@@ -10,7 +10,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
 This library has been created to enable users to view examples of data visualisations utilising the NHS themes, using NHS public data sets. Users can load the required packages and create the sample data sets, and then choose which data visualisations they would like to run in their own environment.
@@ -32,7 +32,7 @@ if (!require("pacman")) install.packages("pacman"); library(pacman)
 
 pacman::p_load(Rcpp, tidyverse,dplyr,tidyr,
                ggplot2,ggthemes,ggtext,scales,
-               png,ggalt,NHSRdatasets,onsr,shinycssloaders, plotly, networkD3, FunnelPlotR, NHSRplotthedots,remotes)
+               png,ggalt,NHSRdatasets,onsr,shinycssloaders, plotly, networkD3, FunnelPlotR, NHSRplotthedots,remotes,devtools,DT)
 
 # Install some packages directly from GitHub
 remotes::install_github("rOpenSci/fingertipsR",
@@ -562,7 +562,24 @@ plot_ly(Attends_wide_per, x = ~org_code, y = ~`1`, type = "bar", marker = list(c
 rm(AttendsAll) # Have put as an extra section to stop this appearing in the output underneath the chart
 ```
 
-## Scatter plot
+## Scatter plot {.tabset .tabset-fade}
+
+### ggplot
+
+```{r, warning = FALSE}
+
+Attends %>%
+  ggplot(aes(y=admissions, x = attendances, color = org_code)) +
+  geom_point() +
+  labs(title = 'Scatter plot - admissions vs attendances',
+       x = 'Attendances',
+       y = 'Admissions') +
+  scale_y_continuous(labels = label_number(suffix = " K", scale = 1e-3)) +
+  scale_x_continuous(labels = label_number(suffix = " K", scale = 1e-3)) +
+  theme(legend.title=element_blank())
+
+```
+
 
 ### plotly
 
